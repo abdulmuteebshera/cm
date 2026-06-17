@@ -1,0 +1,5 @@
+{
+    "new_string": "<div class=\"dashboard-nav quant-topbar d-flex flex-wrap align-items-center justify-content-between\">\n    <div class=\"nav-left d-flex gap-3 align-items-center\">\n        <div class=\"dash-sidebar-toggler d-xl-none\" id=\"dash-sidebar-toggler\">\n            <i class=\"las la-bars\"><\/i>\n        <\/div>\n        <div class=\"quant-topbar__title\">\n            <span class=\"quant-topbar__label\">@lang('Client Portal')<\/span>\n            <h1 class=\"quant-topbar__heading\">@lang('Portfolio Dashboard')<\/h1>\n        <\/div>\n    <\/div>",
+    "old_string": "<div class=\"dashboard-nav d-flex flex-wrap align-items-center justify-content-between\">\n    <div class=\"nav-left d-flex gap-4 align-items-center\">\n        <div class=\"dash-sidebar-toggler d-xl-none\" id=\"dash-sidebar-toggler\">\n            <i class=\"fas fa-bars\"><\/i>\n        <\/div>\n    <\/div>",
+    "path": "c:\\xampp\\htdocs\\portal\\portal\\core\\resources\\views\\templates\\invester\\partials\\topbar.blade.php"
+}

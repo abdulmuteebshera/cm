@@ -1,0 +1,299 @@
+{
+	"banner": {
+		"builder": true,
+		"no_selection": true,
+		"name": "Banner Content",
+		"content": {
+			"images": {
+				"image": {
+					"size": "900x600"
+				}
+			},
+			"heading": "text",
+			"sub_heading": "text",
+			"button_name": "text",
+			"button_link": "text"
+		}
+	},
+
+    "cta": {
+		"builder": true,
+		"name": "Call to Action",
+		"content": {
+            "images": {
+				"image_left": {
+					"size": "525x435"
+				},
+                "image_right": {
+					"size": "355x540"
+				}
+			},
+
+			"heading": "text",
+			"sub_heading": "text",
+            "button_name":"text",
+            "button_link":"text"
+		}
+	},
+
+    "calculation": {
+		"builder": true,
+		"name": "Calculation Section",
+        "content": {
+            "images": {
+				"image_left": {
+					"size": "380x235"
+				},
+                "image_right": {
+					"size": "415x300"
+				}
+			}
+		}
+	},
+	"top_investor": {
+		"builder": true,
+		"name": "Top Investor Section",
+		"content": {
+			"heading": "text",
+			"sub_heading": "text"
+		}
+	},
+	"counter": {
+		"builder": true,
+		"name": "Counter Section",
+		"element": {
+			"counter_digit": "text",
+			"title": "text",
+			"modal": true
+		}
+	},
+	"why_choose": {
+		"builder": true,
+		"name": "Why Choose Us",
+		"content": {
+			"images": {
+				"image": {
+					"size": "300x310"
+				}
+			},
+			"heading": "text",
+			"sub_heading": "text"
+		},
+		"element": {
+			"title": "text",
+			"icon": "icon",
+			"content": "textarea",
+			"modal": true
+		}
+	},
+	"testimonial": {
+		"builder": true,
+		"name": "Testimonial Section",
+        "content": {
+			"images": {
+				"image": {
+					"size": "690x300"
+				}
+			}
+
+		},
+		"element": {
+			"images": {
+				"image": {
+					"size": "100x100"
+				}
+
+			},
+			"author": "text",
+			"designation": "text",
+			"quote": "textarea",
+			"modal": true
+		}
+	},
+
+	"breadcrumb": {
+		"builder": true,
+		"no_selection": true,
+		"name": "Breadcrumb",
+		"content": {
+			"images": {
+				"image": {
+					"size": "550x340"
+				}
+			}
+		}
+	},
+
+	"plan": {
+		"builder": true,
+		"name": "Plan Section",
+        "content": {
+			"heading": "text",
+			"sub_heading": "text"
+		}
+	},
+
+	"social_icon": {
+		"builder": true,
+		"no_selection": true,
+		"name": "Social Icon",
+		"element": {
+			"icon": "icon",
+			"url": "text",
+			"modal": true
+		}
+	},
+
+	"transaction": {
+		"builder": true,
+		"name": "Transaction Section",
+		"content": {
+			"heading": "text",
+			"sub_heading": "text"
+		},
+		"element": {
+			"select": {
+				"name": "trx_type",
+				"options": {
+					"deposit": "Deposit",
+					"withdraw": "Withdraw"
+				}
+			},
+			"name": "text",
+			"date": "date",
+			"amount": "text",
+			"gateway": "text",
+			"modal": true
+		}
+	},
+
+	"how_work": {
+		"builder": true,
+		"name": "How Work",
+		"content": {
+            "images": {
+				"image": {
+					"size": "800x700"
+				}
+			},
+			"heading": "text",
+			"sub_heading": "text"
+		},
+		"element": {
+			"title": "text",
+			"sub_title": "text",
+            "icon":"icon",
+			"modal": true
+		}
+	},
+
+    "payment":{
+        "builder": true,
+		"name": "Payment Section",
+		"element": {
+			"images": {
+				"image": {
+					"size": "105x35"
+				}
+			},
+			"modal": true
+		}
+    },
+
+	"blog": {
+		"builder": true,
+		"name": "Blog Section",
+		"content": {
+			"heading": "text",
+			"sub_heading": "text"
+		},
+		"element": {
+			"images": {
+				"image": {
+					"size": "850x640",
+					"thumb": "400x320"
+				}
+			},
+			"title": "text",
+			"description": "textarea-nic",
+			"modal": false
+		}
+	},
+	"policy_pages": {
+		"builder": true,
+		"no_selection": true,
+		"name": "Policy Pages",
+		"element": {
+			"title": "text",
+			"details": "textarea-nic",
+			"modal": false
+		}
+	},
+    "faq": {
+		"builder": true,
+		"name": "FAQ Section",
+        "content": {
+			"heading": "text"
+		},
+		"element": {
+			"question": "text",
+			"answer": "textarea",
+			"modal": true
+		}
+	},
+	"contact": {
+		"builder": true,
+		"no_selection": true,
+		"name": "Contact Us",
+        "content": {
+            "heading": "text",
+			"map_url": "text",
+			"support_email": "text"
+		},
+
+		"element": {
+			"icon": "icon",
+			"title": "text",
+			"content": "text",
+			"modal": true
+		}
+	},
+	"login": {
+		"builder": true,
+		"no_selection": true,
+		"name": "Login Page",
+		"content": {
+			"images": {
+				"image": {
+					"size": "550x560"
+				}
+			}
+		}
+	},
+	"register": {
+		"builder": true,
+		"no_selection": true,
+		"name": "Register Page",
+		"content": {
+			"images": {
+				"image": {
+					"size": "910x870"
+				}
+			}
+		}
+	},
+	"footer": {
+		"builder": true,
+		"no_selection": true,
+		"name": "Footer Section",
+		"content": {
+            "images": {
+				"image": {
+					"size": "300x275"
+				}
+			},
+			"content": "text"
+		}
+	}
+}
+

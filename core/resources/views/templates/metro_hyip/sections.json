@@ -1,0 +1,231 @@
+{
+
+    "banner": {
+        "builder": true,
+        "no_selection": true,
+        "name": "Banner Content",
+        "content": {
+            "heading": "text",
+            "button_name": "text",
+            "button_link": "text",
+            "button_two_name": "text",
+            "button_two_link": "text"
+        }
+    },
+
+    "about": {
+        "builder": true,
+        "name": "About",
+        "content": {
+            "images": {
+                "image": {
+                    "size": "600x580"
+                }
+            },
+            "heading": "text",
+            "sub_heading": "text",
+            "content": "textarea", 
+            "point_one": "text",
+            "point_two": "text",
+            "point_three": "text",
+            "point_four": "text"
+        }
+    },
+
+    "plan": {
+        "builder": true,
+        "name": "Plan Section",
+        "content": {
+            "heading": "text",
+            "sub_heading": "text"
+        }
+    },
+
+    "affiliate": {
+        "builder": true,
+        "name": "Affiliate Section",
+        "content": {
+            "images": {
+                "image": {
+                    "size": "710x620"
+                }
+            },
+            "heading": "text",
+            "sub_heading": "text"
+        },
+        "element": {
+            "icon": "icon",
+            "title": "text",
+            "content": "textarea",
+            "modal": true
+        }
+    },
+
+    
+    "calculation": {
+        "builder": true,
+        "name": "Profit Calculator",
+        "content": {
+            "heading": "text"
+        }
+    },
+
+    "how_work": {
+        "builder": true,
+        "name": "How Work",
+        "content": {
+            "heading": "text",
+            "sub_heading": "text"
+        },
+        "element": {
+            "images": {
+                "image": {
+                    "size": "115x100"
+                }
+            },
+            "title": "text",
+            "modal": true
+        }
+    },
+
+    "faq": {
+        "builder": true,
+        "name": "FAQ Section",
+        "content": {
+            "images": {
+                "image": {
+                    "size": "490x440"
+                }
+            },
+            "heading": "text",
+            "sub_heading": "text"
+        },
+        "element": {
+            "question": "text",
+            "answer": "textarea",
+            "modal": true
+        }
+    },
+
+    "transaction": {
+        "builder": true,
+        "name": "Transaction Section",
+        "content": {
+            "heading": "text",
+            "sub_heading": "text"
+        },
+        "element": {
+            "name": "text",
+            "date": "date",
+            "amount": "text",
+            "gateway": "text",
+            "modal": true
+        }
+    },
+
+    "top_investor": {
+        "builder": true,
+        "name": "Top Investor",
+        "content": {
+            "heading": "text",
+            "sub_heading": "text"
+        }
+    },
+    
+    "ranking": {
+        "builder": true,
+        "name": "Ranking Section",
+        "content": {
+            "heading": "text",
+            "sub_heading": "text",
+            "content": "text"
+        }
+    },
+
+    "blog": {
+        "builder": true,
+        "name": "Blog Section",
+        "content": {
+            "heading": "text",
+            "sub_heading": "text"
+        },
+        "element": {
+            "images": {
+                "image": {
+                    "size": "965x450",
+                    "thumb": "415x305"
+                }
+            },
+            "title": "text",
+            "description": "textarea-nic",
+            "modal": false
+        }
+    },
+
+    "footer": {
+        "builder": true,
+        "no_selection": true,
+        "name": "Footer",
+        "content": {
+            "images": {
+                "image": {
+                    "size": "240x580"
+                }
+            }, 
+            "content": "text"
+        }
+    },
+   
+    "contact": {
+        "builder": true,
+        "no_selection": true,
+        "name": "Contact Section",
+        "content": {
+            "heading": "text",
+            "sub_heading": "text",
+            "map": "text"
+        },
+        "element": {
+            "icon": "icon",
+            "title": "text",
+            "content": "text",
+            "modal": true
+        }
+    },
+
+    "login": {
+		"builder": true,
+		"no_selection": true,
+		"name": "Login Page",
+		"content": {
+			"images": {
+				"image": {
+					"size": "455x405"
+				}
+			}
+		}
+	},
+	"register": {
+		"builder": true,
+		"no_selection": true,
+		"name": "Register Page",
+		"content": {
+			"images": {
+				"image": {
+					"size": "455x405"
+				}
+			}
+		}
+	},
+
+    "policy_pages": {
+        "builder": true,
+        "no_selection": true,
+        "name": "Policy Pages",
+        "element": {
+            "title": "text",
+            "details": "textarea-nic",
+            "modal": false
+        }
+    }
+}

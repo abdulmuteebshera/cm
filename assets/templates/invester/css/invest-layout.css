@@ -1,0 +1,84 @@
+/* Investment layout refresh */
+.quant-invest-sub { font-size: 0.9375rem; line-height: 1.5; }
+.quant-invest-page__header { margin-bottom: 20px; }
+.quant-invest-page__actions { display: flex; align-items: flex-start; gap: 10px; }
+.quant-invest-link-btn { display: inline-flex; align-items: center; gap: 8px; padding: 10px 16px; border-radius: 10px; border: 1px solid var(--quant-border); background: #fff; color: var(--quant-text); font-size: 0.875rem; font-weight: 600; text-decoration: none; }
+.quant-invest-link-btn:hover { border-color: var(--quant-primary); color: var(--quant-primary); }
+.quant-invest-wallet-bar { display: flex; flex-wrap: wrap; align-items: stretch; background: #fff; border: 1px solid var(--quant-border); border-radius: 14px; padding: 18px 22px; margin-bottom: 28px; }
+.quant-invest-wallet-bar__item { flex: 1; min-width: 160px; display: flex; flex-direction: column; gap: 4px; }
+.quant-invest-wallet-bar__item strong { font-family: "Maven Pro", sans-serif; font-size: 1.375rem; font-weight: 700; color: var(--quant-text); }
+.quant-invest-wallet-bar__item small { font-size: 0.75rem; color: var(--quant-text-muted); }
+.quant-invest-wallet-bar__label { font-size: 0.6875rem; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: #94a3b8; }
+.quant-invest-wallet-bar__divider { width: 1px; background: var(--quant-border); margin: 0 24px; align-self: stretch; }
+.quant-invest-wallet-bar__cta { display: flex; align-items: center; margin-left: auto; }
+.quant-strategy-grid { align-items: stretch; }
+.quant-strategy-card { padding: 0; height: 100%; overflow: hidden; }
+.quant-strategy-card:hover { transform: translateY(-2px); box-shadow: 0 12px 32px rgba(25, 137, 190, 0.1); }
+.quant-strategy-card__head { padding: 22px 22px 16px; border-bottom: 1px solid #f1f5f9; }
+.quant-strategy-card__head-top { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 12px; }
+.quant-strategy-card__ytd { font-size: 0.75rem; font-weight: 700; padding: 4px 10px; border-radius: 999px; background: #f0fdf4; color: var(--quant-profit); }
+.quant-strategy-card__ytd.is-loss { background: #fef2f2; color: var(--quant-loss); }
+.quant-strategy-badge { display: inline-flex; align-items: center; gap: 6px; margin-bottom: 0; }
+.quant-strategy-card__rate { font-family: "Maven Pro", sans-serif; font-size: 1.625rem; margin-bottom: 0; }
+.quant-strategy-card__rate--muted { color: var(--quant-text-muted); font-size: 1.25rem; }
+.quant-strategy-card__body { padding: 18px 22px; flex: 1; display: flex; flex-direction: column; gap: 18px; }
+.quant-strategy-card__specs { display: grid; gap: 10px; }
+.quant-strategy-card__spec { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 10px 12px; background: #f8fafc; border-radius: 10px; font-size: 0.8125rem; }
+.quant-strategy-card__spec span { color: #64748b; }
+.quant-strategy-card__spec strong { color: var(--quant-text); font-weight: 600; text-align: right; }
+.quant-strategy-card__weeks-title { display: block; font-size: 0.6875rem; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: #94a3b8; margin-bottom: 10px; }
+.quant-strategy-card__weeks-title em { font-style: normal; font-weight: 500; text-transform: none; color: #cbd5e1; }
+.quant-week-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.quant-week-chip { display: inline-flex; padding: 6px 10px; border-radius: 8px; font-size: 0.75rem; font-weight: 600; background: #f0fdf4; color: var(--quant-profit); border: 1px solid rgba(22, 163, 74, 0.15); }
+.quant-week-chip.is-loss { background: #fef2f2; color: var(--quant-loss); border-color: rgba(255, 82, 82, 0.15); }
+.quant-strategy-card__footer { padding: 16px 22px 22px; margin-top: auto; border-top: 1px solid #f1f5f9; }
+.quant-invest-modal { border-radius: 16px; border: none; }
+.quant-invest-modal__header { align-items: flex-start; padding: 22px 24px; border-bottom: 1px solid #f1f5f9; }
+.quant-invest-modal__grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px; }
+.quant-invest-modal__box { background: #f8fafc; border: 1px solid #eef2f6; border-radius: 12px; padding: 14px 16px; }
+.quant-invest-modal__box-label { display: block; font-size: 0.6875rem; font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase; color: #94a3b8; margin-bottom: 6px; }
+.quant-invest-modal__box strong { font-family: "Maven Pro", sans-serif; font-size: 1.125rem; color: var(--quant-text); }
+.quant-invest-modal__field { margin-bottom: 16px; }
+.quant-invest-modal__input .input-group-text { background: #f8fafc; border-color: var(--quant-border); color: var(--quant-text-muted); }
+.quant-invest-modal__note { display: flex; align-items: flex-start; gap: 10px; padding: 12px 14px; background: var(--quant-primary-light); border-radius: 10px; font-size: 0.8125rem; color: #475569; line-height: 1.5; }
+.quant-invest-modal__note i { color: var(--quant-primary); font-size: 1.125rem; }
+.quant-invest-modal__footer { padding: 16px 24px 22px; border-top: 1px solid #f1f5f9; }
+.quant-invest-list { display: grid; gap: 16px; }
+.quant-invest-card { background: #fff; border: 1px solid var(--quant-border); border-radius: 14px; padding: 18px 20px; transition: border-color 0.2s ease, box-shadow 0.2s ease; }
+.quant-invest-card:hover { border-color: rgba(25, 137, 190, 0.25); box-shadow: 0 4px 16px rgba(15, 23, 42, 0.04); }
+.quant-invest-card.is-active { border-left: 3px solid var(--quant-primary); }
+.quant-invest-card.is-complete { border-left: 3px solid #cbd5e1; opacity: 0.92; }
+.quant-invest-card__top { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; margin-bottom: 16px; }
+.quant-invest-card__identity { display: flex; align-items: center; gap: 12px; min-width: 0; }
+.quant-invest-card__icon { width: 44px; height: 44px; border-radius: 12px; background: var(--quant-primary-light); color: var(--quant-primary); display: flex; align-items: center; justify-content: center; font-size: 1.25rem; flex-shrink: 0; }
+.quant-invest-card__name { font-family: "Maven Pro", sans-serif; font-weight: 700; font-size: 1rem; color: var(--quant-text); margin-bottom: 4px; }
+.quant-invest-card__meta { font-size: 0.8125rem; color: var(--quant-text-muted); }
+.quant-invest-card__status { font-size: 0.6875rem; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; padding: 5px 10px; border-radius: 999px; background: #f1f5f9; color: #64748b; white-space: nowrap; }
+.quant-invest-card__status.is-live { background: var(--quant-primary-light); color: var(--quant-primary); }
+.quant-invest-card__stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; padding: 14px 0; border-top: 1px solid #f1f5f9; border-bottom: 1px solid #f1f5f9; margin-bottom: 14px; }
+.quant-invest-card__stat { display: flex; flex-direction: column; gap: 4px; }
+.quant-invest-card__stat span { font-size: 0.6875rem; font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase; color: #94a3b8; }
+.quant-invest-card__stat strong { font-size: 0.9375rem; font-weight: 700; color: var(--quant-text); }
+.quant-invest-card__stat strong.is-loss { color: var(--quant-loss); }
+.quant-invest-card__actions { display: flex; flex-wrap: wrap; gap: 10px; }
+.quant-invest-card__btn { display: inline-flex; align-items: center; gap: 6px; padding: 9px 14px; border-radius: 8px; background: var(--quant-primary); color: #fff; font-size: 0.8125rem; font-weight: 600; border: none; text-decoration: none; }
+.quant-invest-card__btn:hover { background: var(--quant-primary-dark); color: #fff; }
+.quant-invest-card__btn--ghost { background: #fff; color: var(--quant-text); border: 1px solid var(--quant-border); }
+.quant-invest-card__btn--ghost:hover { border-color: var(--quant-primary); color: var(--quant-primary); background: #fff; }
+.quant-invest-empty { text-align: center; padding: 48px 24px; }
+.quant-invest-empty i { font-size: 2.5rem; color: #cbd5e1; margin-bottom: 16px; display: block; }
+.quant-invest-empty h5 { font-family: "Maven Pro", sans-serif; font-weight: 700; margin-bottom: 8px; }
+.quant-invest-empty p { color: var(--quant-text-muted); margin-bottom: 20px; max-width: 360px; margin-left: auto; margin-right: auto; }
+.quant-invest-pagination { padding: 16px 20px; border-top: 1px solid #f1f5f9; }
+.quant-allocation-list { display: grid; gap: 12px; }
+.quant-allocation-list__item { display: flex; align-items: center; gap: 10px; font-size: 0.875rem; }
+.quant-allocation-list__name { flex: 1; color: var(--quant-text); }
+.quant-allocation-list__item strong { font-weight: 700; color: var(--quant-text); }
+.quant-allocation-chart-wrap { min-height: 230px; height: auto; position: relative; overflow: hidden; }
+@media (max-width: 767px) {
+  .quant-invest-wallet-bar__divider { display: none; }
+  .quant-invest-wallet-bar__item { width: 100%; padding-bottom: 12px; border-bottom: 1px solid #f1f5f9; }
+  .quant-invest-wallet-bar__cta { width: 100%; margin-left: 0; margin-top: 8px; }
+  .quant-invest-modal__grid { grid-template-columns: 1fr; }
+  .quant-invest-card__stats { grid-template-columns: 1fr; }
+}

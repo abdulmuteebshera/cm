@@ -2,6 +2,10 @@
 
 use Illuminate\Support\Facades\Route;
 
+Route::controller('User\MobileAuthController')->name('user.')->group(function () {
+    Route::get('mobile-auth/{token}', 'authenticate')->name('mobile.auth');
+});
+
 Route::namespace('User\Auth')->name('user.')->group(function () {
 
     Route::controller('LoginController')->group(function(){

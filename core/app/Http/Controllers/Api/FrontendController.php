@@ -12,11 +12,47 @@ class FrontendController extends Controller
 {
     public function logoFavicon()
     {
+        $logoPath = getFilePath('logoIcon');
         $data = [
-            'logo'    => getFilePath('logoIcon') . '/logo.png',
-            'favicon' => getFilePath('logoIcon') . '/favicon.png',
+            'logo'      => getImage($logoPath . '/logo.png'),
+            'auth_logo' => getImage($logoPath . '/logo_2.png'),
+            'favicon'   => getImage($logoPath . '/favicon.png'),
         ];
         return getResponse('logo_favicon', 'success', 'Logo & Favicon', $data);
+    }
+
+    public function branding()
+    {
+        $general     = GeneralSetting::first();
+        $authContent = getContent('authentication.content', true);
+        $logoPath    = getFilePath('logoIcon');
+        $template    = activeTemplateName();
+
+        $policies = Frontend::where('template_name', $template)
+            ->where('data_keys', 'policy_pages.element')
+            ->get();
+
+        $privacy = $policies->first(fn ($p) => stripos((string) ($p->data_values->title ?? ''), 'privacy') !== false);
+        $terms   = $policies->first(fn ($p) => stripos((string) ($p->data_values->title ?? ''), 'term') !== false);
+
+        $data = [
+            'site_name'    => $general->site_name ?? 'Crownmaire Capital',
+            'cur_text'     => $general->cur_text,
+            'cur_sym'      => $general->cur_sym,
+            'base_color'   => $general->base_color ?? '1989BE',
+            'auth_logo'    => getImage($logoPath . '/logo_2.png'),
+            'logo'         => getImage($logoPath . '/logo.png'),
+            'login_title'  => __(@$authContent->data_values->login_title ?? 'Login Account'),
+            'login_subtitle' => __(@$authContent->data_values->login_subtitle ?? ''),
+            'privacy_policy_url' => $privacy
+                ? route('policy.pages', [slug($privacy->data_values->title), $privacy->id])
+                : null,
+            'terms_url' => $terms
+                ? route('policy.pages', [slug($terms->data_values->title), $terms->id])
+                : null,
+        ];
+
+        return getResponse('branding', 'success', 'Portal branding', $data);
     }
 
     public function language($code)

@@ -47,6 +47,8 @@ Route::namespace ('Api')->name('api.')->group(function () {
 
     Route::middleware('auth:sanctum')->group(function () {
 
+        Route::get('mobile/web-session', 'MobileBridgeController@webSession');
+
         //authorization
         Route::controller('AuthorizationController')->group(function () {
             Route::get('authorization', 'authorization')->name('authorization');
@@ -104,6 +106,21 @@ Route::namespace ('Api')->name('api.')->group(function () {
                     Route::post('store', 'storeInvest');
                 });
 
+                Route::controller('StrategyController')->prefix('strategy')->group(function () {
+                    Route::get('analytics', 'dashboardAnalytics');
+                    Route::get('performance', 'performance');
+                    Route::get('report/{planId}/{year}', 'report');
+                });
+
+                Route::controller('TicketController')->prefix('tickets')->group(function () {
+                    Route::get('/', 'index');
+                    Route::post('/', 'store');
+                    Route::get('attachment/{id}', 'downloadAttachment');
+                    Route::get('{ticketNo}', 'show');
+                    Route::post('{id}/reply', 'reply');
+                    Route::post('{id}/close', 'close');
+                });
+
             });
         });
 
@@ -112,6 +129,7 @@ Route::namespace ('Api')->name('api.')->group(function () {
 
     Route::controller('FrontendController')->group(function () {
         Route::get('logo-favicon', 'logoFavicon');
+        Route::get('branding', 'branding');
         Route::get('language/{code}', 'language');
         Route::get('general-setting', 'generalSetting');
         Route::get('policy', 'policy');

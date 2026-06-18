@@ -4,6 +4,8 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Lib\FormProcessor;
+use App\Lib\HyipLab;
+use App\Lib\StrategyPayoutService;
 use App\Models\Deposit;
 use App\Models\DeviceToken;
 use App\Models\Form;
@@ -13,6 +15,7 @@ use App\Models\Referral;
 use App\Models\Transaction;
 use App\Models\User;
 use App\Models\Withdrawal;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
@@ -22,21 +25,48 @@ class UserController extends Controller
 {
     public function dashboard()
     {
-        $totalInvest     = Invest::where('user_id', auth()->id())->sum('amount');
-        $totalDeposit    = Deposit::where('user_id', auth()->id())->where('status', 1)->sum('amount');
-        $totalWithdraw   = Withdrawal::where('user_id', auth()->id())->whereIn('status', [1])->sum('amount');
-        $referralEarings = Transaction::where('user_id', auth()->id())->where('remark', 'referral_commission')->sum('amount');
-        $pendingDeposit  = Deposit::pending()->where('user_id', auth()->id())->sum('amount');
-        $pendingWithdraw = Withdrawal::pending()->where('user_id', auth()->id())->sum('amount');
+        $user = auth()->user();
+        $year = (int) date('Y');
+
+        $nextWorkingDay = now()->toDateString();
+        $isHoliday      = HyipLab::isHoliDay(now()->toDateTimeString(), gs());
+        if ($isHoliday) {
+            $nextWorkingDay = Carbon::parse(HyipLab::nextWorkingDay(24))->toDateString();
+        }
 
         $data = [
-            'user'              => auth()->user(),
-            'total_invest'      => $totalInvest,
-            'total_deposit'     => $totalDeposit,
-            'total_withdrawal'  => $totalWithdraw,
-            'referral_earnings' => $referralEarings,
-            'pending_deposit'   => $pendingDeposit,
-            'pending_withdraw'  => $pendingWithdraw,
+            'user'                  => $user,
+            'portfolio_value'       => $user->deposit_wallet + $user->interest_wallet,
+            'total_invest'          => Invest::where('user_id', $user->id)->sum('amount'),
+            'total_deposit'         => Deposit::where('user_id', $user->id)->where('status', 1)->sum('amount'),
+            'total_withdrawal'      => Withdrawal::where('user_id', $user->id)->whereIn('status', [1])->sum('amount'),
+            'referral_earnings'     => Transaction::where('user_id', $user->id)->where('remark', 'referral_commission')->sum('amount'),
+            'pending_deposit'       => Deposit::pending()->where('user_id', $user->id)->sum('amount'),
+            'pending_withdraw'      => Withdrawal::pending()->where('user_id', $user->id)->sum('amount'),
+            'submitted_deposits'    => Deposit::where('status', '!=', 0)->where('user_id', $user->id)->sum('amount'),
+            'successful_deposits'   => Deposit::successful()->where('user_id', $user->id)->sum('amount'),
+            'rejected_deposits'     => Deposit::rejected()->where('user_id', $user->id)->sum('amount'),
+            'submitted_withdrawals' => Withdrawal::where('status', '!=', 0)->where('user_id', $user->id)->sum('amount'),
+            'successful_withdrawals'=> Withdrawal::approved()->where('user_id', $user->id)->sum('amount'),
+            'rejected_withdrawals'  => Withdrawal::rejected()->where('user_id', $user->id)->sum('amount'),
+            'invests'               => Invest::where('user_id', $user->id)->sum('amount'),
+            'completed_invests'     => Invest::where('user_id', $user->id)->where('status', 0)->sum('amount'),
+            'running_invests'       => Invest::where('user_id', $user->id)->where('status', 1)->sum('amount'),
+            'interests'             => Transaction::where('remark', 'interest')->where('user_id', $user->id)->sum('amount'),
+            'deposit_wallet_invests'=> Invest::where('user_id', $user->id)->where('wallet_type', 'deposit_wallet')->where('status', 1)->sum('amount'),
+            'interest_wallet_invests'=> Invest::where('user_id', $user->id)->where('wallet_type', 'interest_wallet')->where('status', 1)->sum('amount'),
+            'is_holiday'            => $isHoliday,
+            'next_working_day'      => $nextWorkingDay,
+            'chart_data'            => StrategyPayoutService::userReturnAnalyticsChart($user, $year)->values(),
+            'strategy_charts'       => StrategyPayoutService::userStrategyChartsForDashboard($year)->values(),
+            'strategy_chart_year'   => $year,
+            'year_to_date_return'   => StrategyPayoutService::userYearToDateReturn($user, $year),
+            'allocation'            => [
+                'labels' => ['Forex', 'Indices', 'Commodities', 'Futures', 'Crypto'],
+                'series' => [20, 18, 33, 15, 14],
+                'colors' => ['#1989BE', '#14709a', '#47a8d4', '#7fc4e8', '#b3dff5'],
+            ],
+            'transactions'          => $user->transactions()->orderByDesc('id')->take(8)->get(),
         ];
 
         return getResponse('dashboard', 'success', 'User Dashboard', $data);

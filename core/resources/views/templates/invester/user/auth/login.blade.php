@@ -8,7 +8,7 @@
     <div class="container">
         <div class="row justify-content-center">
             <div class="col-xl-6 col-lg-7 col-md-8">
-                <a href="../../" class="text-center d-block mb-3 mb-sm-4 auth-page-logo"><img src="{{ getImage(getFilePath('logoIcon').'/logo_2.png') }}" alt="logo"></a>
+                <a href="{{ route('home') }}" class="text-center d-block mb-3 mb-sm-4 auth-page-logo"><img src="{{ getImage(getFilePath('logoIcon').'/logo_2.png') }}" alt="logo"></a>
                 <form action="{{ route('user.login') }}" method="POST" class="verify-gcaptcha account-form">
                     @csrf
                     <div class="mb-4">
@@ -49,7 +49,7 @@
 <div class="col-12 mt-4">
     <p class="text-center">
         @lang('This access is by invitation only. If you think you should be considered, please') 
-        <a href="https://crownmaire.com/contact" class="fw-bold text--base" target="_blank">@lang('contact')</a> 
+        <a href="{{ route('contact') }}" class="fw-bold text--base">@lang('contact')</a> 
         @lang('your Crownmaire representative.')
     </p>
 </div>

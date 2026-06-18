@@ -53,7 +53,7 @@
                 </div>
 
                 <div class="cm-contact-form-wrap cm-reveal cm-reveal--delay">
-                    <form action="{{ route('contact') }}" class="cm-contact-form verify-gcaptcha" method="post">
+                    <form action="{{ route('contact') }}" class="cm-contact-form" method="post">
                         @csrf
                         <div class="cm-form-row cm-form-row--2">
                             <div class="cm-form-group">
@@ -123,9 +123,6 @@
                             >{{ old('message') }}</textarea>
                         </div>
                         <div class="cm-form-footer">
-                            <div class="cm-form-footer__captcha">
-                                <x-captcha path="templates.invester.partials" />
-                            </div>
                             <button type="submit" class="cm-btn cm-btn--accent cm-form-footer__submit">
                                 <i class="las la-paper-plane"></i> @lang('Send')
                             </button>
@@ -166,14 +163,10 @@
     </section>
 @endsection
 
-@push('style-lib')
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-@endpush
-
 @push('style')
-    <link rel="stylesheet" href="{{ asset($activeTemplateTrue . 'css/crownmaire-landing.css') }}?v=12">
+    <link rel="stylesheet" href="{{ asset($activeTemplateTrue . 'css/crownmaire-landing.css') }}?v=16">
 @endpush
 
 @push('script')
-    <script src="{{ asset($activeTemplateTrue . 'js/crownmaire-landing.js') }}?v=12"></script>
+    <script src="{{ asset($activeTemplateTrue . 'js/crownmaire-landing.js') }}?v=16" defer></script>
 @endpush

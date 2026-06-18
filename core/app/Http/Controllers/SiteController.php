@@ -63,11 +63,6 @@ class SiteController extends Controller
             'phone'        => 'nullable|string|max:50',
         ]);
 
-        if (!verifyCaptcha()) {
-            $notify[] = ['error', 'Invalid captcha provided'];
-            return back()->withNotify($notify);
-        }
-
         $request->session()->regenerateToken();
         $random = getNumber();
 

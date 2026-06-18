@@ -7,52 +7,50 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title> {{ $general->siteName(__($pageTitle)) }}</title>
     @include('partials.seo')
-    <!-- font  -->
-    <link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@1,400;1,500&family=Maven+Pro:wght@400;500;600&display=swap" rel="stylesheet">
 
+    @php $isLanding = request()->routeIs('home', 'about', 'contact'); @endphp
 
-    <link href="{{ asset('assets/global/css/bootstrap.min.css') }}" rel="stylesheet">
+    @if ($isLanding)
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+        <link rel="stylesheet" href="{{ asset('assets/global/css/line-awesome.min.css') }}" />
+        @stack('style')
+    @else
+        <!-- font  -->
+        <link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@1,400;1,500&family=Maven+Pro:wght@400;500;600&display=swap" rel="stylesheet">
 
-    <link href="{{ asset('assets/global/css/all.min.css') }}" rel="stylesheet">
+        <link href="{{ asset('assets/global/css/bootstrap.min.css') }}" rel="stylesheet">
+        <link href="{{ asset('assets/global/css/all.min.css') }}" rel="stylesheet">
+        <link rel="stylesheet" href="{{ asset('assets/global/css/line-awesome.min.css') }}" />
+        <link rel="stylesheet" href="{{ asset($activeTemplateTrue . 'css/lib/animate.css') }}">
+        <link rel="stylesheet" href="{{ asset($activeTemplateTrue . 'css/lib/slick.css') }}">
+        <link rel="stylesheet" href="{{ asset($activeTemplateTrue . 'css/lib/magnific-popup.css') }}">
+        <link rel="stylesheet" href="{{ asset($activeTemplateTrue . 'css/lib/apexcharts.css') }}">
+        <link rel="stylesheet" href="{{ asset($activeTemplateTrue . 'css/main.css') }}">
+        @stack('style-lib')
+        <link rel="stylesheet" href="{{ asset($activeTemplateTrue . 'css/custom.css') }}">
+        <link rel="stylesheet" href="{{ asset($activeTemplateTrue . 'css/invest-layout.css') }}">
+        <link rel="stylesheet" href="{{ asset($activeTemplateTrue . 'css/color.php') }}?color=<?php echo $general->base_color ?>">
+        @stack('style')
+        <style>
+            .pb-120 { padding-bottom: clamp(40px, 4vw, 40px); }
+            .pt-120 { padding-top: clamp(40px, 4vw, 40px); }
+            .container { max-width: 1140px; }
+        </style>
+    @endif
 
-    <link rel="stylesheet" href="{{ asset('assets/global/css/line-awesome.min.css') }}" />
-
-    <link rel="stylesheet" href="{{ asset($activeTemplateTrue . 'css/lib/animate.css') }}">
-
-    <!-- Plugin Link -->
-    <link rel="stylesheet" href="{{ asset($activeTemplateTrue . 'css/lib/slick.css') }}">
-    <link rel="stylesheet" href="{{ asset($activeTemplateTrue . 'css/lib/magnific-popup.css') }}">
-    <link rel="stylesheet" href="{{ asset($activeTemplateTrue . 'css/lib/apexcharts.css') }}">
-
-    <!-- Main css -->
-    <link rel="stylesheet" href="{{ asset($activeTemplateTrue . 'css/main.css') }}">
-
-    @stack('style-lib')
-
-    <link rel="stylesheet" href="{{ asset($activeTemplateTrue . 'css/custom.css') }}">
-    <link rel="stylesheet" href="{{ asset($activeTemplateTrue . 'css/invest-layout.css') }}">
-
-    <link rel="stylesheet" href="{{ asset($activeTemplateTrue . 'css/color.php') }}?color=<?php echo $general->base_color ?>">
-
-    @stack('style')
-    @if(request()->routeIs('home', 'about', 'contact'))
+    @if ($isLanding)
     <style>
         body.cm-landing-page .preloader,
         body.cm-landing-page .overlay,
         body.cm-landing-page .cookies-card { display: none !important; }
-        body.cm-landing-page .container { max-width: 1200px; }
-    </style>
-    @else
-    <style>
-        .pb-120 { padding-bottom: clamp(40px, 4vw, 40px); }
-        .pt-120 { padding-top: clamp(40px, 4vw, 40px); }
-        .container { max-width: 1140px; }
     </style>
     @endif
 
 </head>
 
-<body @if(request()->routeIs('home', 'about', 'contact')) class="cm-landing-page" @endif>
+<body @if($isLanding) class="cm-landing-page" @endif>
     @yield('panel')
 
     @php
@@ -73,23 +71,19 @@
         <!-- cookies dark version end -->
     @endif
 
+    @if ($isLanding)
+        @include('partials.notify')
+        @stack('script')
+    @else
     <script src="{{ asset('assets/global/js/jquery-3.6.0.min.js') }}"></script>
     <script src="{{ asset('assets/global/js/bootstrap.bundle.min.js') }}"></script>
-
-    <!-- Pluglin Link -->
     <script src="{{ asset($activeTemplateTrue . 'js/lib/slick.min.js') }}"></script>
     <script src="{{ asset($activeTemplateTrue . 'js/lib/magnific-popup.min.js') }}"></script>
     <script src="{{ asset($activeTemplateTrue . 'js/lib/apexcharts.min.js') }}"></script>
-
     @stack('script-lib')
-
-    <!-- Main js -->
     <script src="{{ asset($activeTemplateTrue . 'js/main.js') }}"></script>
-
     @stack('script')
-
     @include('partials.plugins')
-
     @include('partials.notify')
 
     <script>
@@ -128,11 +122,11 @@
             });
         });
 
-
         setTimeout(function() {
             $('.cookies-card').removeClass('hide')
         }, 2000);
     </script>
+    @endif
 </body>
 
 </html>

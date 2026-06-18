@@ -274,14 +274,10 @@
     </section>
 @endsection
 
-@push('style-lib')
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-@endpush
-
 @push('style')
-    <link rel="stylesheet" href="{{ asset($activeTemplateTrue . 'css/crownmaire-landing.css') }}?v=11">
+    <link rel="stylesheet" href="{{ asset($activeTemplateTrue . 'css/crownmaire-landing.css') }}?v=16">
 @endpush
 
 @push('script')
-    <script src="{{ asset($activeTemplateTrue . 'js/crownmaire-landing.js') }}?v=11"></script>
+    <script src="{{ asset($activeTemplateTrue . 'js/crownmaire-landing.js') }}?v=16" defer></script>
 @endpush

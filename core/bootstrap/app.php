@@ -15,8 +15,6 @@ $app = new Illuminate\Foundation\Application(
     $_ENV['APP_BASE_PATH'] ?? dirname(__DIR__)
 );
 
-$app->useEnvironmentPath(base_path('vendor/psr/log/'));
-
 /*
 |--------------------------------------------------------------------------
 | Bind Important Interfaces

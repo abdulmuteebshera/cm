@@ -9,6 +9,7 @@ use App\Models\SupportTicket;
 use App\Models\User;
 use App\Models\Withdrawal;
 use Illuminate\Pagination\Paginator;
+use Illuminate\Support\Facades\URL;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -30,6 +31,10 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot()
     {
+        if (!$this->app->runningInConsole() && request()->hasHeader('Host')) {
+            $rootUrl = rtrim(request()->root(), '/');
+            URL::forceRootUrl($rootUrl);
+        }
 
         $activeTemplate = activeTemplate();
         $general        = gs();

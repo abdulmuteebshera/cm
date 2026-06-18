@@ -164,9 +164,9 @@
 @endsection
 
 @push('style')
-    <link rel="stylesheet" href="{{ asset($activeTemplateTrue . 'css/crownmaire-landing.css') }}?v=16">
+    <link rel="stylesheet" href="{{ asset($activeTemplateTrue . 'css/crownmaire-landing.css') }}?v=17">
 @endpush
 
 @push('script')
-    <script src="{{ asset($activeTemplateTrue . 'js/crownmaire-landing.js') }}?v=16" defer></script>
+    <script src="{{ asset($activeTemplateTrue . 'js/crownmaire-landing.js') }}?v=17" defer></script>
 @endpush

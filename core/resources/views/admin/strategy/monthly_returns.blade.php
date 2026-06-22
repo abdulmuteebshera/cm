@@ -7,7 +7,7 @@
                     <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
                         <div>
                             <h5 class="mb-1">{{ __($plan->name) }}</h5>
-                            <p class="text-muted mb-0">@lang('Track monthly performance for charts. Select a year (2022 to current), enter rates, and approve each month after it ends. Approved data appears on the Strategy Performance page; the dashboard shows the current year only.')</p>
+                            <p class="text-muted mb-0">@lang('Track monthly performance for charts. Select a year (2023 to current), enter rates, and approve each month after it ends. Approved data appears on the Strategy Performance page; the dashboard shows the current year only.')</p>
                         </div>
                         <div class="d-flex align-items-center gap-2">
                             <label class="mb-0 fw-bold">@lang('Year')</label>
@@ -16,6 +16,16 @@
                                     <option value="{{ $entryYear }}" @selected($year == $entryYear)>{{ $entryYear }}</option>
                                 @endforeach
                             </select>
+                        </div>
+                    </div>
+                    <div class="alert alert-warning d-flex flex-wrap align-items-center justify-content-between gap-2" role="alert">
+                        <div>
+                            <i class="las la-lock"></i>
+                            @lang('Approved months are locked. Enable editing to correct already-approved performance values (they stay live on charts).')
+                        </div>
+                        <div class="form-check form-switch mb-0">
+                            <input class="form-check-input" type="checkbox" id="editApprovedToggle" name="edit_approved" value="1" form="monthlyReturnsForm">
+                            <label class="form-check-label fw-bold" for="editApprovedToggle">@lang('Edit approved returns')</label>
                         </div>
                     </div>
                     <form id="monthlyReturnsForm" action="{{ route('admin.strategy.monthly.returns.save', $plan->id) }}" method="post">
@@ -38,7 +48,7 @@
                                             @if($isFuture)<span class="badge badge--dark">@lang('Upcoming')</span>@elseif($isApproved)<span class="badge badge--success">@lang('Approved')</span>@elseif($status === 'pending')<span class="badge badge--warning">@lang('Pending')</span>@else<span class="badge badge--dark">@lang('Draft')</span>@endif
                                         </div>
                                         <div class="input-group input-group-sm mb-2">
-                                            <input type="number" step="0.0001" min="-100" max="100" class="form-control" name="returns[{{ $fieldKey }}]" form="monthlyReturnsForm" value="{{ old('returns.'.$fieldKey, optional($record)->return_percent) }}" @disabled($isApproved || $isFuture)>
+                                            <input type="number" step="0.0001" min="-100" max="100" class="form-control @if($isApproved) approved-return-input @endif" name="returns[{{ $fieldKey }}]" form="monthlyReturnsForm" value="{{ old('returns.'.$fieldKey, optional($record)->return_percent) }}" @disabled($isApproved || $isFuture)>
                                             <span class="input-group-text">%</span>
                                         </div>
                                         @if($record && $status === 'pending' && $record->return_percent != 0)
@@ -61,6 +71,20 @@
     </div>
     <x-confirmation-modal />
 @endsection
+@push('script')
+    <script>
+        (function () {
+            var toggle = document.getElementById('editApprovedToggle');
+            if (!toggle) return;
+            toggle.addEventListener('change', function () {
+                document.querySelectorAll('.approved-return-input').forEach(function (input) {
+                    input.disabled = !toggle.checked;
+                    input.classList.toggle('border-warning', toggle.checked);
+                });
+            });
+        })();
+    </script>
+@endpush
 @push('breadcrumb-plugins')
     <a href="{{ route('admin.strategy.period.returns', $plan->id) }}" class="btn btn-sm btn-outline--info">@lang('Period Returns (Payouts)')</a>
     <a href="{{ route('admin.plan.index') }}" class="btn btn-sm btn-outline--primary"><i class="las la-arrow-left"></i> @lang('All Strategies')</a>

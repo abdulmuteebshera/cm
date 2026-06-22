@@ -5,6 +5,7 @@ namespace App\Http\Controllers\User;
 use App\Http\Controllers\Controller;
 use App\Lib\FormProcessor;
 use App\Lib\HyipLab;
+use App\Lib\StrategyPayoutService;
 use App\Models\AdminNotification;
 use App\Models\Transaction;
 use App\Models\Withdrawal;
@@ -27,7 +28,9 @@ class WithdrawController extends Controller
             $nextWorkingDay = Carbon::parse($nextWorkingDay)->toDateString();
         }
 
-        return view($this->activeTemplate . 'user.withdraw.methods', compact('pageTitle', 'withdrawMethod', 'isHoliday', 'nextWorkingDay'));
+        $managementFeeRate = StrategyPayoutService::userManagementFeePercent(auth()->user());
+
+        return view($this->activeTemplate . 'user.withdraw.methods', compact('pageTitle', 'withdrawMethod', 'isHoliday', 'nextWorkingDay', 'managementFeeRate'));
     }
 
     public function withdrawStore(Request $request)
@@ -58,20 +61,28 @@ class WithdrawController extends Controller
             return back()->withNotify($notify);
         }
 
-        $charge      = $method->fixed_charge + ($request->amount * $method->percent_charge / 100);
-        $afterCharge = $request->amount - $charge;
+        $charge = $method->fixed_charge + ($request->amount * $method->percent_charge / 100);
+
+        // Strategy management fee (blended across the user's active investments),
+        // deducted in addition to the method's withdrawal charge / taxes.
+        $managementFeeRate = StrategyPayoutService::userManagementFeePercent($user);
+        $managementFee     = $request->amount * $managementFeeRate / 100;
+
+        $afterCharge = $request->amount - $charge - $managementFee;
+        $afterCharge = max(0, $afterCharge);
         $finalAmount = $afterCharge * $method->rate;
 
-        $withdraw               = new Withdrawal();
-        $withdraw->method_id    = $method->id; // wallet method ID
-        $withdraw->user_id      = $user->id;
-        $withdraw->amount       = $request->amount;
-        $withdraw->currency     = $method->currency;
-        $withdraw->rate         = $method->rate;
-        $withdraw->charge       = $charge;
-        $withdraw->final_amount = $finalAmount;
-        $withdraw->after_charge = $afterCharge;
-        $withdraw->trx          = getTrx();
+        $withdraw                 = new Withdrawal();
+        $withdraw->method_id      = $method->id; // wallet method ID
+        $withdraw->user_id        = $user->id;
+        $withdraw->amount         = $request->amount;
+        $withdraw->currency       = $method->currency;
+        $withdraw->rate           = $method->rate;
+        $withdraw->charge         = $charge;
+        $withdraw->management_fee = $managementFee;
+        $withdraw->final_amount   = $finalAmount;
+        $withdraw->after_charge   = $afterCharge;
+        $withdraw->trx            = getTrx();
         $withdraw->save();
         session()->put('wtrx', $withdraw->trx);
         return to_route('user.withdraw.preview');

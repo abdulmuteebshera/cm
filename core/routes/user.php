@@ -54,6 +54,11 @@ Route::middleware('auth')->name('user.')->group(function () {
                 Route::get('dashboard', 'home')->name('home');
                 Route::get('strategy-performance', 'strategyPerformance')->name('strategy.performance');
                 Route::get('strategy-report/{planId}/{year}', 'strategyReport')->name('strategy.report');
+                Route::get('announcements', 'announcements')->name('announcements');
+                Route::get('tiers', 'tiers')->name('tiers');
+                Route::get('leaderboard', 'leaderboard')->name('leaderboard');
+                Route::get('portfolio-allocation', 'portfolio')->name('portfolio');
+                Route::get('certificates', 'certificates')->name('certificates');
 
                 //2FA
                 Route::get('twofactor', 'show2faForm')->name('twofactor');

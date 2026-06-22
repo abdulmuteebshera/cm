@@ -131,6 +131,8 @@ class HyipLab
             $invest->save();
         }
 
+        \App\Lib\CertificateService::ensureForPlan($user, $plan, $invest->created_at);
+
         if ($this->setting->invest_commission == 1) {
             $commissionType = 'invest_commission';
             self::levelCommission($user, $amount, $commissionType, $trx, $this->setting);

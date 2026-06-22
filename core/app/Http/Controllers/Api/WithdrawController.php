@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Lib\FormProcessor;
+use App\Lib\StrategyPayoutService;
 use App\Models\AdminNotification;
 use App\Models\Transaction;
 use App\Models\Withdrawal;
@@ -79,20 +80,27 @@ class WithdrawController extends Controller
             ]);
         }
 
-        $charge      = $method->fixed_charge + ($request->amount * $method->percent_charge / 100);
-        $afterCharge = $request->amount - $charge;
+        $charge = $method->fixed_charge + ($request->amount * $method->percent_charge / 100);
+
+        // Strategy management fee (blended across the user's active investments),
+        // deducted in addition to the method's withdrawal charge / taxes.
+        $managementFeeRate = StrategyPayoutService::userManagementFeePercent($user);
+        $managementFee     = $request->amount * $managementFeeRate / 100;
+
+        $afterCharge = max(0, $request->amount - $charge - $managementFee);
         $finalAmount = $afterCharge * $method->rate;
 
-        $withdraw               = new Withdrawal();
-        $withdraw->method_id    = $method->id; // wallet method ID
-        $withdraw->user_id      = $user->id;
-        $withdraw->amount       = $request->amount;
-        $withdraw->currency     = $method->currency;
-        $withdraw->rate         = $method->rate;
-        $withdraw->charge       = $charge;
-        $withdraw->final_amount = $finalAmount;
-        $withdraw->after_charge = $afterCharge;
-        $withdraw->trx          = getTrx();
+        $withdraw                 = new Withdrawal();
+        $withdraw->method_id      = $method->id; // wallet method ID
+        $withdraw->user_id        = $user->id;
+        $withdraw->amount         = $request->amount;
+        $withdraw->currency       = $method->currency;
+        $withdraw->rate           = $method->rate;
+        $withdraw->charge         = $charge;
+        $withdraw->management_fee = $managementFee;
+        $withdraw->final_amount   = $finalAmount;
+        $withdraw->after_charge   = $afterCharge;
+        $withdraw->trx            = getTrx();
         $withdraw->save();
 
         $notify[] = 'Withdraw request created';

@@ -7,9 +7,13 @@ use App\Lib\FormProcessor;
 use App\Lib\GoogleAuthenticator;
 use App\Lib\HyipLab;
 use App\Lib\StrategyPayoutService;
+use App\Lib\TierProgram;
+use App\Models\Announcement;
+use App\Models\Certificate;
 use App\Models\Deposit;
 use App\Models\Form;
 use App\Models\Invest;
+use App\Models\Leaderboard;
 use App\Models\Plan;
 use App\Models\PlanStrategyReport;
 use App\Models\PromotionTool;
@@ -70,6 +74,42 @@ class UserController extends Controller
         $data['strategyChartYear'] = (int) date('Y');
         $data['yearToDateReturn'] = StrategyPayoutService::userYearToDateReturn($user);
 
+        // All-time, account-level return: total returns earned vs total invested principal.
+        $accountInvested = (float) Invest::where('user_id', $user->id)->sum('initial_amount');
+        $accountEarned   = (float) Transaction::where('user_id', $user->id)->where('remark', 'interest')->sum('amount');
+        $data['accountReturn'] = (object) [
+            'invested'      => $accountInvested,
+            'earned'        => $accountEarned,
+            'total_percent' => $accountInvested > 0 ? round(($accountEarned / $accountInvested) * 100, 2) : 0,
+        ];
+
+        $data['investedStrategies'] = Invest::where('user_id', $user->id)
+            ->with('plan')
+            ->get()
+            ->groupBy('plan_id')
+            ->map(function ($group) {
+                $plan = $group->first()->plan;
+
+                return (object) [
+                    'plan_id'         => (int) ($plan->id ?? 0),
+                    'name'            => $plan->name ?: 'Unknown Plan',
+                    'frequency_label' => $plan->isStrategy() ? $plan->payoutFrequencyLabel() : '',
+                    'is_strategy'     => $plan->isStrategy(),
+                    'total_amount'    => (float) $group->sum('amount'),
+                    'running_amount'  => (float) $group->where('status', 1)->sum('amount'),
+                    'invested_amount' => (float) $group->where('status', 1)->sum('initial_amount'),
+                    'returns_amount'  => (float) $group->where('status', 1)->sum('paid'),
+                    'running_count'   => $group->where('status', 1)->count(),
+                    'completed_count' => $group->where('status', 0)->count(),
+                ];
+            })
+            ->sortByDesc('running_amount')
+            ->values();
+
+        $data['tierStanding'] = TierProgram::resolve((float) $data['totalInvest']);
+
+        $data['allocations'] = \App\Models\PortfolioAllocation::where('status', 1)->ordered()->get();
+
         return view($this->activeTemplate . 'user.dashboard', $data);
     }
 
@@ -79,6 +119,7 @@ class UserController extends Controller
         $plans          = StrategyPayoutService::activeStrategyPlans();
         $selectedPlan   = null;
         $yearSections   = collect();
+        $comparison     = StrategyPayoutService::strategyComparison();
         $selectedPlanId = (int) $request->query('plan');
 
         if ($selectedPlanId > 0) {
@@ -93,8 +134,64 @@ class UserController extends Controller
             'pageTitle',
             'plans',
             'selectedPlan',
-            'yearSections'
+            'yearSections',
+            'comparison'
         ));
+    }
+
+    public function announcements()
+    {
+        $pageTitle     = 'Announcements';
+        $announcements = Announcement::where('status', 1)->orderByDesc('id')->paginate(getPaginate());
+        return view($this->activeTemplate . 'user.announcements', compact('pageTitle', 'announcements'));
+    }
+
+    public function tiers()
+    {
+        $user      = auth()->user();
+        $pageTitle = 'Membership Tiers';
+
+        // Qualifying amount: total invested by the user across strategies.
+        $investedAmount = (float) Invest::where('user_id', $user->id)->sum('amount');
+
+        $tiers      = TierProgram::tiers();
+        $facilities = TierProgram::facilities();
+        $standing   = TierProgram::resolve($investedAmount);
+
+        return view($this->activeTemplate . 'user.tiers', compact('pageTitle', 'tiers', 'facilities', 'standing', 'investedAmount'));
+    }
+
+    public function portfolio()
+    {
+        $pageTitle   = 'Portfolio Allocation';
+        $allocations = \App\Models\PortfolioAllocation::where('status', 1)->ordered()->get();
+        return view($this->activeTemplate . 'user.portfolio', compact('pageTitle', 'allocations'));
+    }
+
+    public function certificates()
+    {
+        $pageTitle = 'My Certificates';
+        $user      = auth()->user();
+
+        // Make sure the welcome certificate and any strategy certificates exist.
+        \App\Lib\CertificateService::syncForUser($user);
+
+        $certificates = Certificate::where('user_id', $user->id)
+            ->orderByRaw("FIELD(type,'welcome') DESC")
+            ->orderByDesc('issued_at')
+            ->get();
+
+        return view($this->activeTemplate . 'user.certificates', compact('pageTitle', 'certificates'));
+    }
+
+    public function leaderboard()
+    {
+        $pageTitle = 'Leaderboard';
+        $entries   = Leaderboard::where('status', 1)->orderByDesc('amount')->orderBy('id')->take(10)->get();
+
+        $myInvested = (float) Invest::where('user_id', auth()->id())->sum('amount');
+
+        return view($this->activeTemplate . 'user.leaderboard', compact('pageTitle', 'entries', 'myInvested'));
     }
 
     public function strategyReport($planId, $year)
@@ -278,7 +375,27 @@ class UserController extends Controller
         $pageTitle = 'Referrals';
         $user      = auth()->user();
         $maxLevel  = Referral::max('level');
-        return view($this->activeTemplate . 'user.referrals', compact('pageTitle', 'user', 'maxLevel'));
+
+        $totalReferrals  = $user->referrals()->count();
+        $activeReferrals = $user->activeReferrals()->count();
+        $commissionEarned = Transaction::where('user_id', $user->id)
+            ->where('remark', 'referral_commission')
+            ->sum('amount');
+
+        // Straight commission rate paid when a referred user invests in a strategy.
+        $commissionRate = (float) optional(
+            Referral::where('commission_type', 'invest_commission')->where('level', 1)->first()
+        )->percent;
+
+        return view($this->activeTemplate . 'user.referrals', compact(
+            'pageTitle',
+            'user',
+            'maxLevel',
+            'totalReferrals',
+            'activeReferrals',
+            'commissionEarned',
+            'commissionRate'
+        ));
     }
 
     public function promotionalBanners()

@@ -2,6 +2,7 @@ export default {
   expo: {
     name: 'CrownMaire',
     slug: 'crownmaire-portal',
+    owner: 'abdulshera',
     version: '1.0.0',
     orientation: 'portrait',
     icon: './assets/icon.png',
@@ -32,7 +33,7 @@ export default {
       apiUrl: process.env.EXPO_PUBLIC_API_URL || 'https://crownmairecapital.com/api',
       siteUrl: process.env.EXPO_PUBLIC_SITE_URL || 'https://crownmairecapital.com',
       eas: {
-        projectId: 'crownmaire-portal',
+        projectId: 'd76e78d3-39c7-4ca3-acdb-0a8440a09bf1',
       },
     },
   },

@@ -158,6 +158,8 @@ class RegisterController extends Controller
         $user->tv = 1;
         $user->save();
 
+        \App\Lib\CertificateService::ensureWelcome($user);
+
 
         $adminNotification = new AdminNotification();
         $adminNotification->user_id = $user->id;

@@ -170,6 +170,27 @@
                 </li>
 
 
+                <li class="sidebar-menu-item {{ menuActive('admin.announcement.index') }}">
+                    <a href="{{ route('admin.announcement.index') }}" class="nav-link ">
+                        <i class="menu-icon las la-bullhorn"></i>
+                        <span class="menu-title">@lang('Announcements')</span>
+                    </a>
+                </li>
+
+                <li class="sidebar-menu-item {{ menuActive('admin.leaderboard.index') }}">
+                    <a href="{{ route('admin.leaderboard.index') }}" class="nav-link ">
+                        <i class="menu-icon las la-trophy"></i>
+                        <span class="menu-title">@lang('Leaderboard')</span>
+                    </a>
+                </li>
+
+                <li class="sidebar-menu-item {{ menuActive('admin.portfolio.allocation.index') }}">
+                    <a href="{{ route('admin.portfolio.allocation.index') }}" class="nav-link ">
+                        <i class="menu-icon las la-chart-pie"></i>
+                        <span class="menu-title">@lang('Portfolio Allocation')</span>
+                    </a>
+                </li>
+
                 <li class="sidebar-menu-item {{ menuActive('admin.promotional.tool.index') }}">
                     <a href="{{ route('admin.promotional.tool.index') }}" class="nav-link ">
                         <i class="menu-icon las la-ad"></i>

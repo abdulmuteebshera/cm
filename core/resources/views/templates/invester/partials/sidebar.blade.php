@@ -89,14 +89,42 @@
                     <span class="sidebar-menu__text">@lang('Strategy Performance')</span>
                 </a>
             </li>
+            <li>
+                <a href="{{ route('user.portfolio') }}" class="{{ menuActive('user.portfolio') }}">
+                    <span class="sidebar-menu__icon"><i class="las la-chart-pie"></i></span>
+                    <span class="sidebar-menu__text">@lang('Portfolio Allocation')</span>
+                </a>
+            </li>
+            <li>
+                <a href="{{ route('user.tiers') }}" class="{{ menuActive('user.tiers') }}">
+                    <span class="sidebar-menu__icon"><i class="las la-crown"></i></span>
+                    <span class="sidebar-menu__text">@lang('Membership Tiers')</span>
+                </a>
+            </li>
+            <li>
+                <a href="{{ route('user.leaderboard') }}" class="{{ menuActive('user.leaderboard') }}">
+                    <span class="sidebar-menu__icon"><i class="las la-trophy"></i></span>
+                    <span class="sidebar-menu__text">@lang('Leaderboard')</span>
+                </a>
+            </li>
             @if ($general->user_ranking)
             <li>
                 <a href="{{ route('user.invest.ranking') }}" class="{{ menuActive('user.invest.ranking') }}">
-                    <span class="sidebar-menu__icon"><i class="las la-trophy"></i></span>
+                    <span class="sidebar-menu__icon"><i class="las la-medal"></i></span>
                     <span class="sidebar-menu__text">@lang('Ranking')</span>
                 </a>
             </li>
             @endif
+            <li>
+                <a href="{{ route('user.certificates') }}" class="{{ menuActive('user.certificates') }}">
+                    <span class="sidebar-menu__icon"><i class="las la-certificate"></i></span>
+                    <span class="sidebar-menu__text">@lang('Certificates')</span>
+                </a>
+            </li>
+        </ul>
+
+        <p class="sidebar-nav__label">@lang('Rewards & Network')</p>
+        <ul class="sidebar-menu">
             <li>
                 <a href="{{ route('user.referrals') }}" class="{{ menuActive('user.referrals') }}">
                     <span class="sidebar-menu__icon"><i class="las la-user-friends"></i></span>
@@ -106,11 +134,21 @@
             @if ($general->promotional_tool && $promotionCount)
             <li>
                 <a href="{{ route('user.promotional.banner') }}" class="{{ menuActive('user.promotional.banner') }}">
-                    <span class="sidebar-menu__icon"><i class="las la-bullhorn"></i></span>
+                    <span class="sidebar-menu__icon"><i class="las la-ad"></i></span>
                     <span class="sidebar-menu__text">@lang('Promotional Banner')</span>
                 </a>
             </li>
             @endif
+        </ul>
+
+        <p class="sidebar-nav__label">@lang('Updates')</p>
+        <ul class="sidebar-menu">
+            <li>
+                <a href="{{ route('user.announcements') }}" class="{{ menuActive('user.announcements') }}">
+                    <span class="sidebar-menu__icon"><i class="las la-bullhorn"></i></span>
+                    <span class="sidebar-menu__text">@lang('Announcements')</span>
+                </a>
+            </li>
         </ul>
 
         <p class="sidebar-nav__label">@lang('Account')</p>

@@ -20,7 +20,7 @@ use RuntimeException;
 
 class StrategyPayoutService
 {
-    public const COMPANY_FOUNDED_YEAR = 2022;
+    public const COMPANY_FOUNDED_YEAR = 2023;
 
     public static function nextWeekEnd(?CarbonInterface $from = null): Carbon
     {
@@ -136,7 +136,7 @@ class StrategyPayoutService
             ->sortKeys();
     }
 
-    public static function syncWeeklyReturnRecord(Plan $plan, int $isoYear, int $isoWeek, ?float $returnPercent): PlanWeeklyReturn
+    public static function syncWeeklyReturnRecord(Plan $plan, int $isoYear, int $isoWeek, ?float $returnPercent, bool $allowApprovedEdit = false): PlanWeeklyReturn
     {
         $record = PlanWeeklyReturn::firstOrNew([
             'plan_id' => $plan->id,
@@ -145,6 +145,14 @@ class StrategyPayoutService
         ]);
 
         if ($record->payout_status === PlanWeeklyReturn::STATUS_APPROVED) {
+            if (!$allowApprovedEdit) {
+                return $record;
+            }
+
+            // Edit an already-approved return without un-approving it.
+            $record->return_percent = round((float) ($returnPercent ?? 0), 4);
+            $record->save();
+
             return $record;
         }
 
@@ -234,7 +242,7 @@ class StrategyPayoutService
         return $items->values();
     }
 
-    /** Years available for admin performance entry (company founded 2022 through current year). */
+    /** Years available for admin performance entry (company founded 2023 through current year). */
     public static function performanceEntryYears(?int $fromYear = null): array
     {
         $fromYear = $fromYear ?? self::COMPANY_FOUNDED_YEAR;
@@ -286,7 +294,7 @@ class StrategyPayoutService
         return $now->gt($monthEnd);
     }
 
-    public static function syncMonthlyReturnRecord(Plan $plan, int $year, int $month, ?float $returnPercent): PlanMonthlyReturn
+    public static function syncMonthlyReturnRecord(Plan $plan, int $year, int $month, ?float $returnPercent, bool $allowApprovedEdit = false): PlanMonthlyReturn
     {
         $record = PlanMonthlyReturn::firstOrNew([
             'plan_id' => $plan->id,
@@ -295,6 +303,14 @@ class StrategyPayoutService
         ]);
 
         if ($record->payout_status === PlanMonthlyReturn::STATUS_APPROVED) {
+            if (!$allowApprovedEdit) {
+                return $record;
+            }
+
+            // Edit an already-approved return without un-approving it.
+            $record->return_percent = round((float) ($returnPercent ?? 0), 4);
+            $record->save();
+
             return $record;
         }
 
@@ -484,6 +500,154 @@ class StrategyPayoutService
             ->get();
     }
 
+    /**
+     * Static positioning attributes per payout frequency used on the strategy
+     * comparison table (management fee, risk profile, liquidity, horizon).
+     */
+    public static function strategyProfiles(): array
+    {
+        return [
+            Plan::FREQ_QUARTERLY => [
+                'management_fee' => 8.0,
+                'risk_label'     => 'High',
+                'risk_score'     => 9,
+                'strategy_style' => 'Aggressive Quant',
+                'suitable_for'   => 'Growth-Oriented Investors',
+                'horizon'        => '1 Year',
+                'objective'      => 'Steady capital growth with quarterly payouts',
+            ],
+            Plan::FREQ_SEMI_ANNUAL => [
+                'management_fee' => 6.0,
+                'risk_label'     => 'Balanced',
+                'risk_score'     => 6,
+                'strategy_style' => 'Balanced Quant',
+                'suitable_for'   => 'Balanced Investors',
+                'horizon'        => '1 Year',
+                'objective'      => 'Balanced growth across market cycles',
+            ],
+            Plan::FREQ_YEARLY => [
+                'management_fee' => 4.0,
+                'risk_label'     => 'Conservative',
+                'risk_score'     => 3,
+                'strategy_style' => 'Conservative Quant',
+                'suitable_for'   => 'Long-Term Wealth Builders',
+                'horizon'        => '1 Year',
+                'objective'      => 'Maximum compounding for long-term investors',
+            ],
+        ];
+    }
+
+    /**
+     * Management fee % charged on withdrawals for a user, blended across the
+     * strategies they are actively invested in (weighted by invested amount).
+     * Returns 0 when the user has no active strategy investments.
+     */
+    public static function userManagementFeePercent(int|object $user): float
+    {
+        $userId = is_object($user) ? (int) ($user->id ?? 0) : (int) $user;
+        if ($userId <= 0) {
+            return 0.0;
+        }
+
+        $invests = Invest::query()
+            ->where('user_id', $userId)
+            ->where('status', 1)
+            ->get(['amount', 'plan_id']);
+
+        if ($invests->isEmpty()) {
+            return 0.0;
+        }
+
+        $profiles = self::strategyProfiles();
+        $plans    = Plan::whereIn('id', $invests->pluck('plan_id')->unique()->all())->get()->keyBy('id');
+
+        $weighted = 0.0;
+        $total    = 0.0;
+
+        foreach ($invests as $invest) {
+            $plan = $plans->get($invest->plan_id);
+            if (!$plan || (int) $plan->plan_mode !== Plan::MODE_STRATEGY) {
+                continue;
+            }
+
+            $fee    = (float) ($profiles[$plan->payout_frequency ?? '']['management_fee'] ?? 0);
+            $amount = (float) $invest->amount;
+
+            $weighted += $amount * $fee;
+            $total    += $amount;
+        }
+
+        if ($total <= 0) {
+            return 0.0;
+        }
+
+        return round($weighted / $total, 4);
+    }
+
+    /**
+     * Build the side-by-side comparison dataset for all active strategies:
+     * performance per year, average annual return, current YTD, payout
+     * frequency, management fee and risk profile.
+     */
+    public static function strategyComparison(): object
+    {
+        $plans    = self::activeStrategyPlans();
+        $profiles = self::strategyProfiles();
+        $current  = (int) date('Y');
+        $fromYear = self::COMPANY_FOUNDED_YEAR;
+
+        $yearsWithData = collect();
+        $rows = $plans->map(function (Plan $plan) use ($profiles, $current, $fromYear, $yearsWithData): object {
+            $profile = $profiles[$plan->payout_frequency ?? Plan::FREQ_QUARTERLY] ?? [];
+
+            $yearly         = [];
+            $completedTotals = [];
+
+            for ($year = $fromYear; $year <= $current; $year++) {
+                $chart = self::strategyChartForPlan($plan, $year);
+                if ($chart->point_count <= 0) {
+                    continue;
+                }
+
+                $yearly[$year] = round((float) $chart->ytd_percent, 2);
+                $yearsWithData->push($year);
+
+                if ($year < $current) {
+                    $completedTotals[] = $yearly[$year];
+                }
+            }
+
+            $avgAnnual = count($completedTotals) > 0
+                ? round(array_sum($completedTotals) / count($completedTotals), 2)
+                : (count($yearly) ? round(array_sum($yearly) / count($yearly), 2) : 0.0);
+
+            return (object) [
+                'plan_id'         => $plan->id,
+                'name'            => $plan->name,
+                'frequency'       => $plan->payout_frequency,
+                'frequency_label' => $plan->payoutFrequencyLabel(),
+                'minimum'         => (float) $plan->minimum,
+                'maximum'         => (float) $plan->maximum,
+                'management_fee'  => (float) ($profile['management_fee'] ?? 0),
+                'risk_label'      => $profile['risk_label'] ?? 'Balanced',
+                'risk_score'      => (int) ($profile['risk_score'] ?? 5),
+                'strategy_style'  => $profile['strategy_style'] ?? '—',
+                'suitable_for'    => $profile['suitable_for'] ?? '—',
+                'horizon'         => $profile['horizon'] ?? '—',
+                'objective'       => $profile['objective'] ?? '',
+                'yearly'          => $yearly,
+                'avg_annual'      => $avgAnnual,
+                'ytd_current'     => $yearly[$current] ?? null,
+                'best_year'       => count($yearly) ? max($yearly) : 0.0,
+            ];
+        });
+
+        return (object) [
+            'rows'  => $rows->values(),
+            'years' => $yearsWithData->unique()->sort()->values()->all(),
+        ];
+    }
+
     /** Years with approved performance or uploaded report for one strategy. */
     public static function strategyPerformanceYearsForPlan(int $planId): Collection
     {
@@ -625,9 +789,26 @@ class StrategyPayoutService
             ->sortBy(fn (PeriodPayoutItem $item) => $item->planPeriodReturn?->period_end?->format('Y-m-d') ?? '')
             ->values();
 
+        $points  = collect();
         $running = 0.0;
 
-        return $items->map(function (PeriodPayoutItem $item) use (&$running): object {
+        // Legacy / carried-over returns: returns posted to clients from the
+        // previous model (interest transactions not tied to an approved period
+        // payout). Shown as the opening point so old clients see their returns.
+        $legacy = self::userLegacyReturn($userId);
+        if ($legacy['percent'] > 0) {
+            $running = round($legacy['percent'], 4);
+            $points->push((object) [
+                'label'              => __('Previous Model'),
+                'return_percent'     => $running,
+                'cumulative_percent' => $running,
+                'frequency_label'    => '',
+                'period_end'         => null,
+                'amount'             => round($legacy['amount'], 4),
+            ]);
+        }
+
+        foreach ($items as $item) {
             $period = $item->planPeriodReturn;
             $plan   = $period?->plan;
             $rate   = round((float) ($item->rate_percent ?: $period?->return_percent ?: 0), 4);
@@ -636,15 +817,60 @@ class StrategyPayoutService
             $freqLabel = $plan?->payoutFrequencyLabel() ?? '';
             $label     = ($plan ? __($plan->name) . ' · ' : '') . ($period?->periodLabel() ?? '');
 
-            return (object) [
+            $points->push((object) [
                 'label'              => $label,
                 'return_percent'     => $rate,
                 'cumulative_percent' => $running,
                 'frequency_label'    => $freqLabel,
                 'period_end'         => $period?->period_end?->format('Y-m-d'),
                 'amount'             => round((float) $item->amount, 4),
-            ];
-        });
+            ]);
+        }
+
+        // Prepend a 0% baseline so the cumulative line/area always has at least
+        // two points to render (e.g. an old client with a single legacy return).
+        if ($points->isNotEmpty()) {
+            $points->prepend((object) [
+                'label'              => __('Start'),
+                'return_percent'     => 0.0,
+                'cumulative_percent' => 0.0,
+                'frequency_label'    => '',
+                'period_end'         => null,
+                'amount'             => 0.0,
+            ]);
+        }
+
+        return $points;
+    }
+
+    /**
+     * Returns posted to a user outside the new approved-period model (i.e. the
+     * carried-over returns from the previous platform). Computed as total
+     * interest transactions minus what was paid via approved period payouts.
+     *
+     * @return array{amount: float, percent: float}
+     */
+    public static function userLegacyReturn(int $userId): array
+    {
+        $totalInterest = (float) Transaction::where('user_id', $userId)
+            ->where('remark', 'interest')
+            ->sum('amount');
+
+        $approvedAmount = (float) PeriodPayoutItem::where('user_id', $userId)->sum('amount');
+
+        $legacyAmount = round($totalInterest - $approvedAmount, 2);
+
+        if ($legacyAmount <= 0.009) {
+            return ['amount' => 0.0, 'percent' => 0.0];
+        }
+
+        $invested = (float) Invest::where('user_id', $userId)
+            ->whereHas('plan', fn ($q) => $q->where('plan_mode', Plan::MODE_STRATEGY))
+            ->sum('initial_amount');
+
+        $percent = $invested > 0 ? round($legacyAmount / $invested * 100, 4) : 0.0;
+
+        return ['amount' => $legacyAmount, 'percent' => $percent];
     }
 
     public static function reverseApprovedPeriodReturn(PlanPeriodReturn $periodReturn): PlanPeriodReturn

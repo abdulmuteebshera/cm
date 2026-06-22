@@ -85,6 +85,12 @@
                                     <span>@lang('Charge')</span>
                                     <span><span class="charge fw-bold">0</span> {{__($general->cur_text)}}</span>
                                 </li>
+                                @if($managementFeeRate > 0)
+                                <li class="list-group-item d-flex justify-content-between">
+                                    <span>@lang('Management Fee') (<span class="fw-bold">{{ showAmount($managementFeeRate) }}</span>%)</span>
+                                    <span><span class="management_fee fw-bold">0</span> {{__($general->cur_text)}}</span>
+                                </li>
+                                @endif
                                 <li class="list-group-item d-flex justify-content-between">
                                     <span>@lang('Receivable')</span> <span><span class="receivable fw-bold"> 0</span> {{__($general->cur_text)}} </span>
                                 </li>
@@ -135,6 +141,9 @@
 
             var charge = parseFloat(fixed_charge + (amount * percent_charge / 100)).toFixed(2);
             $('.charge').text(charge);
+            var managementFeeRate = parseFloat('{{ getAmount($managementFeeRate, 4) }}') || 0;
+            var managementFee = parseFloat(amount * managementFeeRate / 100).toFixed(2);
+            $('.management_fee').text(managementFee);
             if (resource.currency != '{{ $general->cur_text }}') {
                 var rateElement = `<span>@lang('Conversion Rate')</span> <span class="fw-bold">1 {{__($general->cur_text)}} = <span class="rate">${rate}</span>  <span class="base-currency">${resource.currency}</span></span>`;
                 $('.rate-element').html(rateElement);
@@ -149,7 +158,7 @@
                 $('.rate-element').removeClass('d-flex');
                 $('.in-site-cur').removeClass('d-flex');
             }
-            var receivable = parseFloat((parseFloat(amount) - parseFloat(charge))).toFixed(2);
+            var receivable = parseFloat((parseFloat(amount) - parseFloat(charge) - parseFloat(managementFee))).toFixed(2);
             $('.receivable').text(receivable);
             var final_amo = parseFloat(parseFloat(receivable)*rate).toFixed(toFixedDigit);
             $('.final_amo').text(final_amo);

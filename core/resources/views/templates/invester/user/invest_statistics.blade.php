@@ -1,7 +1,7 @@
 @extends($activeTemplate.'layouts.master')
 @section('content')
 @php
-    $totalInvest = auth()->user()->invests->sum('amount');
+    $totalInvest = auth()->user()->invests->sum('initial_amount');
     $totalProfit = auth()->user()->transactions()->where('remark','interest')->sum('amount');
 @endphp
 <div class="dashboard-inner quant-dashboard quant-invest-page">

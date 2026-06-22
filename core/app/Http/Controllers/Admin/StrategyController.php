@@ -44,10 +44,13 @@ class StrategyController extends Controller
         $year       = StrategyPayoutService::resolvePerformanceEntryYear((int) $request->input('year'));
 
         $request->validate([
-            'year'      => 'required|integer|in:' . implode(',', $entryYears),
-            'returns'   => 'nullable|array',
-            'returns.*' => 'nullable|numeric|between:-100,100',
+            'year'          => 'required|integer|in:' . implode(',', $entryYears),
+            'returns'       => 'nullable|array',
+            'returns.*'     => 'nullable|numeric|between:-100,100',
+            'edit_approved' => 'nullable|boolean',
         ]);
+
+        $editApproved = $request->boolean('edit_approved');
 
         foreach (StrategyPayoutService::weeksInCalendarYear($year) as $weekMeta) {
             $fieldKey = $weekMeta['iso_year'] . '_' . $weekMeta['week'];
@@ -66,7 +69,8 @@ class StrategyController extends Controller
                 $plan,
                 $weekMeta['iso_year'],
                 $weekMeta['week'],
-                $rate === null || $rate === '' ? 0 : (float) $rate
+                $rate === null || $rate === '' ? 0 : (float) $rate,
+                $editApproved
             );
         }
 
@@ -126,10 +130,13 @@ class StrategyController extends Controller
         $year       = StrategyPayoutService::resolvePerformanceEntryYear((int) $request->input('year'));
 
         $request->validate([
-            'year'      => 'required|integer|in:' . implode(',', $entryYears),
-            'returns'   => 'nullable|array',
-            'returns.*' => 'nullable|numeric|between:-100,100',
+            'year'          => 'required|integer|in:' . implode(',', $entryYears),
+            'returns'       => 'nullable|array',
+            'returns.*'     => 'nullable|numeric|between:-100,100',
+            'edit_approved' => 'nullable|boolean',
         ]);
+
+        $editApproved = $request->boolean('edit_approved');
 
         foreach (StrategyPayoutService::monthsInCalendarYear($year) as $monthMeta) {
             $fieldKey = $monthMeta['year'] . '_' . $monthMeta['month'];
@@ -148,7 +155,8 @@ class StrategyController extends Controller
                 $plan,
                 $monthMeta['year'],
                 $monthMeta['month'],
-                $rate === null || $rate === '' ? 0 : (float) $rate
+                $rate === null || $rate === '' ? 0 : (float) $rate,
+                $editApproved
             );
         }
 

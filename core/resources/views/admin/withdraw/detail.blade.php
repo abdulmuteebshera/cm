@@ -38,6 +38,13 @@
                             <span class="fw-bold">{{ showAmount($withdrawal->charge ) }} {{ __($general->cur_text) }}</span>
                         </li>
 
+                        @if($withdrawal->management_fee > 0)
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            @lang('Management Fee')
+                            <span class="fw-bold">{{ showAmount($withdrawal->management_fee) }} {{ __($general->cur_text) }}</span>
+                        </li>
+                        @endif
+
                         <li class="list-group-item d-flex justify-content-between align-items-center">
                             @lang('After Charge')
                             <span class="fw-bold">{{ showAmount($withdrawal->after_charge ) }} {{ __($general->cur_text) }}</span>

@@ -23,6 +23,9 @@ Route::controller('TicketController')->prefix('ticket')->name('ticket.')->group(
 
 Route::get('app/deposit/confirm/{hash}', 'Gateway\PaymentController@appDepositConfirm')->name('deposit.app.confirm');
 
+// Public, shareable certificate
+Route::get('certificate/{uid}', 'CertificateController@show')->name('certificate.show');
+
 Route::controller('SiteController')->group(function () {
 
     Route::post('/add/device/token', 'getDeviceToken')->name('add.device.token');

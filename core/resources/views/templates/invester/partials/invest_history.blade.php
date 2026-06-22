@@ -22,15 +22,15 @@
                 <div class="quant-invest-card__stats">
                     <div class="quant-invest-card__stat">
                         <span>@lang('Invested')</span>
+                        <strong>{{ $general->cur_sym }}{{ showAmount($invest->initial_amount) }}</strong>
+                    </div>
+                    <div class="quant-invest-card__stat">
+                        <span>@lang('Returns')</span>
+                        <strong class="text-success">{{ $general->cur_sym }}{{ showAmount($invest->paid) }}</strong>
+                    </div>
+                    <div class="quant-invest-card__stat">
+                        <span>@lang('Current Value')</span>
                         <strong>{{ $general->cur_sym }}{{ showAmount($invest->amount) }}</strong>
-                    </div>
-                    <div class="quant-invest-card__stat">
-                        <span>@lang('Payout Cycle')</span>
-                        <strong>{{ $invest->plan->payoutFrequencyLabel() }}</strong>
-                    </div>
-                    <div class="quant-invest-card__stat">
-                        <span>@lang('Returns Received')</span>
-                        <strong>{{ $general->cur_sym }}{{ showAmount($invest->paid) }}</strong>
                     </div>
                     <div class="quant-invest-card__stat">
                         <span>@lang('Next Period End')</span>

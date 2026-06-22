@@ -7,7 +7,7 @@
             @if($selectedPlan)
                 <p class="text-muted mb-0">{{ __($selectedPlan->name) }} · @lang('Performance history by year')</p>
             @else
-                <p class="text-muted mb-0">@lang('Select a strategy to view performance across all years since 2022.')</p>
+                <p class="text-muted mb-0">@lang('Select a strategy to view performance across all years since 2023.')</p>
             @endif
         </div>
         <div class="quant-header__meta">
@@ -50,6 +50,116 @@
                 </div>
             @endforelse
         </div>
+
+        @if($comparison->rows->count() > 1)
+            <div class="quant-panel mt-4 strategy-compare">
+                <div class="quant-panel__head quant-panel__head--aligned">
+                    <h5 class="quant-panel__title mb-0">@lang('Strategy Comparison')</h5>
+                    <small class="text-muted">@lang('Compare performance, payouts, fees and risk side by side')</small>
+                </div>
+                <div class="quant-panel__body">
+                    @if(count($comparison->years))
+                        <h6 class="strategy-compare__subtitle">@lang('Annual Performance Comparison')</h6>
+                        <div id="strategyCompareChart" class="quant-strategy-chart mb-4"></div>
+                    @endif
+
+                    <div class="table-responsive">
+                        <table class="table strategy-compare__table align-middle mb-0">
+                            <thead>
+                                <tr>
+                                    <th class="strategy-compare__metric">@lang('Comparison')</th>
+                                    @foreach($comparison->rows as $row)
+                                        <th class="text-center">
+                                            {{ __($row->name) }}
+                                            <small class="d-block text-muted fw-normal">{{ $row->frequency_label }}</small>
+                                        </th>
+                                    @endforeach
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <th class="strategy-compare__metric">@lang('Avg. Annual Return')</th>
+                                    @foreach($comparison->rows as $row)
+                                        <td class="text-center fw-bold text-success">{{ showAmount($row->avg_annual) }}%</td>
+                                    @endforeach
+                                </tr>
+                                <tr>
+                                    <th class="strategy-compare__metric">@lang('Return (:year)', ['year' => date('Y')])</th>
+                                    @foreach($comparison->rows as $row)
+                                        <td class="text-center">{{ $row->ytd_current !== null ? showAmount($row->ytd_current) . '%' : '—' }}</td>
+                                    @endforeach
+                                </tr>
+                                <tr>
+                                    <th class="strategy-compare__metric">@lang('Best Year')</th>
+                                    @foreach($comparison->rows as $row)
+                                        <td class="text-center">{{ showAmount($row->best_year) }}%</td>
+                                    @endforeach
+                                </tr>
+                                <tr>
+                                    <th class="strategy-compare__metric">@lang('Strategy Style')</th>
+                                    @foreach($comparison->rows as $row)
+                                        <td class="text-center fw-semibold">{{ __($row->strategy_style) }}</td>
+                                    @endforeach
+                                </tr>
+                                <tr>
+                                    <th class="strategy-compare__metric">@lang('Suitable For')</th>
+                                    @foreach($comparison->rows as $row)
+                                        <td class="text-center">{{ __($row->suitable_for) }}</td>
+                                    @endforeach
+                                </tr>
+                                <tr>
+                                    <th class="strategy-compare__metric">@lang('Payout Frequency')</th>
+                                    @foreach($comparison->rows as $row)
+                                        <td class="text-center"><span class="quant-panel__tag">{{ $row->frequency_label }}</span></td>
+                                    @endforeach
+                                </tr>
+                                <tr>
+                                    <th class="strategy-compare__metric">@lang('Management Fee')</th>
+                                    @foreach($comparison->rows as $row)
+                                        <td class="text-center">{{ showAmount($row->management_fee) }}% @lang('p.a.')</td>
+                                    @endforeach
+                                </tr>
+                                <tr>
+                                    <th class="strategy-compare__metric">@lang('Risk Involved')</th>
+                                    @foreach($comparison->rows as $row)
+                                        <td class="text-center">
+                                            <span class="strategy-compare__risk strategy-compare__risk--{{ $row->risk_score >= 8 ? 'high' : ($row->risk_score >= 6 ? 'medium' : 'low') }}">{{ __($row->risk_label) }}</span>
+                                            <span class="strategy-compare__risk-bar"><span style="width: {{ min(100, $row->risk_score * 10) }}%"></span></span>
+                                        </td>
+                                    @endforeach
+                                </tr>
+                                <tr>
+                                    <th class="strategy-compare__metric">@lang('Investment Horizon')</th>
+                                    @foreach($comparison->rows as $row)
+                                        <td class="text-center">{{ __($row->horizon) }}</td>
+                                    @endforeach
+                                </tr>
+                                <tr>
+                                    <th class="strategy-compare__metric">@lang('Minimum Investment')</th>
+                                    @foreach($comparison->rows as $row)
+                                        <td class="text-center">{{ showAmount($row->minimum) }} {{ __(gs('cur_text')) }}</td>
+                                    @endforeach
+                                </tr>
+                                <tr>
+                                    <th class="strategy-compare__metric">@lang('Objective')</th>
+                                    @foreach($comparison->rows as $row)
+                                        <td class="text-center small text-muted">{{ __($row->objective) }}</td>
+                                    @endforeach
+                                </tr>
+                                <tr>
+                                    <th class="strategy-compare__metric"></th>
+                                    @foreach($comparison->rows as $row)
+                                        <td class="text-center">
+                                            <a href="{{ route('user.strategy.performance', ['plan' => $row->plan_id]) }}" class="btn btn--base btn--sm">@lang('View Details')</a>
+                                        </td>
+                                    @endforeach
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        @endif
     @else
         @forelse($yearSections as $section)
             <div class="quant-panel mb-4">
@@ -130,6 +240,57 @@
         border-radius: 8px;
         background: #f8fafc;
     }
+    .strategy-compare__subtitle {
+        font-weight: 600;
+        color: #0f172a;
+        margin-bottom: 12px;
+    }
+    .strategy-compare__table th,
+    .strategy-compare__table td {
+        border-color: #eef2f7;
+        vertical-align: middle;
+    }
+    .strategy-compare__table thead th {
+        background: #f8fafc;
+        color: #0f172a;
+        font-weight: 700;
+        border-bottom: 2px solid #e2e8f0;
+    }
+    .strategy-compare__metric {
+        text-align: left;
+        color: #475569;
+        font-weight: 600;
+        white-space: nowrap;
+    }
+    .strategy-compare__table tbody tr:nth-child(odd) td,
+    .strategy-compare__table tbody tr:nth-child(odd) .strategy-compare__metric {
+        background: #fcfdff;
+    }
+    .strategy-compare__risk {
+        display: inline-block;
+        font-weight: 600;
+        font-size: 12px;
+        padding: 2px 10px;
+        border-radius: 999px;
+    }
+    .strategy-compare__risk--low { background: rgba(16, 185, 129, .12); color: #059669; }
+    .strategy-compare__risk--medium { background: rgba(245, 158, 11, .14); color: #d97706; }
+    .strategy-compare__risk--high { background: rgba(239, 68, 68, .12); color: #dc2626; }
+    .strategy-compare__risk-bar {
+        display: block;
+        width: 80px;
+        height: 5px;
+        margin: 6px auto 0;
+        background: #eef2f7;
+        border-radius: 999px;
+        overflow: hidden;
+    }
+    .strategy-compare__risk-bar > span {
+        display: block;
+        height: 100%;
+        border-radius: 999px;
+        background: linear-gradient(90deg, #10b981, #f59e0b, #ef4444);
+    }
 </style>
 @endpush
 
@@ -189,6 +350,49 @@
         const el = document.getElementById(data.id);
         if (el) new ApexCharts(el, buildStrategyChartOptions(data)).render();
     });
+})();
+</script>
+@endpush
+@endif
+
+@if(!$selectedPlan && $comparison->rows->count() > 1 && count($comparison->years))
+@push('script-lib')
+<script src="{{ asset('assets/global/js/apexcharts.min.js') }}"></script>
+@endpush
+
+@push('script')
+<script>
+(function () {
+    "use strict";
+
+    const el = document.getElementById('strategyCompareChart');
+    if (!el || typeof ApexCharts === 'undefined') return;
+
+    const categories = [@foreach($comparison->years as $y)"{{ $y }}",@endforeach];
+    const series = [
+        @foreach($comparison->rows as $row)
+        {
+            name: "{{ addslashes(__($row->name)) }}",
+            data: [@foreach($comparison->years as $y){{ isset($row->yearly[$y]) ? getAmount($row->yearly[$y]) : 'null' }},@endforeach]
+        },
+        @endforeach
+    ];
+
+    const options = {
+        chart: { height: 320, type: 'bar', toolbar: { show: false }, fontFamily: 'Maven Pro, sans-serif' },
+        series: series,
+        colors: ['#1989BE', '#10b981', '#f59e0b'],
+        plotOptions: { bar: { borderRadius: 4, columnWidth: '60%' } },
+        dataLabels: { enabled: false },
+        stroke: { show: true, width: 2, colors: ['transparent'] },
+        xaxis: { categories: categories, axisBorder: { show: false }, axisTicks: { show: false } },
+        yaxis: { labels: { formatter: v => v.toFixed(0) + '%', style: { colors: '#64748b', fontSize: '11px' } } },
+        grid: { borderColor: '#e2e8f0', strokeDashArray: 4 },
+        legend: { position: 'top', horizontalAlign: 'left', fontSize: '13px', markers: { radius: 4 } },
+        tooltip: { y: { formatter: v => (v === null ? 'N/A' : v.toFixed(2) + '%') } }
+    };
+
+    new ApexCharts(el, options).render();
 })();
 </script>
 @endpush

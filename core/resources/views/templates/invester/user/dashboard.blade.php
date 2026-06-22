@@ -32,24 +32,24 @@
                 <div class="quant-header__ytd-inner">
                     <div class="quant-header__ytd-label">
                         <span class="quant-header__ytd-title">
-                            @if($yearToDateReturn)
+                            @if($accountReturn->earned > 0)
                                 <span class="quant-live-dot quant-live-dot--active"></span>
                             @endif
                             @lang('Return Till Date')
                         </span>
-                        <small>@lang('Cumulative approved return % · :year', ['year' => date('Y')])</small>
+                        <small>@lang('Total return earned on your account')</small>
                     </div>
                     <div class="quant-header__ytd-value">
-                        @if($yearToDateReturn)
-                            @if($yearToDateReturn->total_percent >= 0)
-                                <span class="quant-live-kpi__value">{{ showAmount($yearToDateReturn->total_percent) }}%</span>
+                        @if($accountReturn->invested > 0)
+                            @if($accountReturn->total_percent >= 0)
+                                <span class="quant-live-kpi__value">{{ showAmount($accountReturn->total_percent) }}%</span>
                             @else
-                                <span class="quant-live-kpi__value quant-live-kpi__value--loss">{{ showAmount($yearToDateReturn->total_percent) }}%</span>
+                                <span class="quant-live-kpi__value quant-live-kpi__value--loss">{{ showAmount($accountReturn->total_percent) }}%</span>
                             @endif
-                            <span class="quant-live-kpi__status quant-live-kpi__status--live">{{ $yearToDateReturn->payout_count }} @lang('approved periods')</span>
+                            <span class="quant-live-kpi__status quant-live-kpi__status--live">{{ $general->cur_sym }}{{ showAmount($accountReturn->earned) }} @lang('earned')</span>
                         @else
                             <span class="quant-live-kpi__value">—</span>
-                            <span class="quant-live-kpi__status">@lang('No approved payouts yet')</span>
+                            <span class="quant-live-kpi__status">@lang('No returns yet')</span>
                         @endif
                     </div>
                 </div>
@@ -144,6 +144,131 @@
         </div>
     </div>
 
+    {{-- Membership tier --}}
+    <div class="quant-panel quant-tier-card">
+        <div class="quant-panel__head quant-panel__head--aligned">
+            <div>
+                <h5 class="quant-panel__title">@lang('Membership Tier')</h5>
+                <p class="quant-panel__desc">@lang('Your status based on total invested capital')</p>
+            </div>
+            <a href="{{ route('user.tiers') }}" class="quant-panel__link">@lang('View tiers') <i class="las la-arrow-right"></i></a>
+        </div>
+        <div class="quant-panel__body">
+            @if($tierStanding->current)
+                @php $cur = $tierStanding->current; @endphp
+                <div class="quant-tier">
+                    <div class="quant-tier__badge" style="--tier-color: {{ $cur['color'] }};">
+                        <span class="quant-tier__emoji">{{ $cur['emoji'] }}</span>
+                    </div>
+                    <div class="quant-tier__info">
+                        <div class="quant-tier__head">
+                            <span class="quant-tier__name" style="color: {{ $cur['color'] }};">{{ __($cur['name']) }}</span>
+                            <span class="quant-tier__amount">{{ showAmount($tierStanding->amount) }} {{ $general->cur_text }} @lang('invested')</span>
+                        </div>
+                        @if($tierStanding->is_top)
+                            <div class="quant-tier__top">
+                                <i class="las la-crown"></i> @lang('You have reached the highest tier')
+                            </div>
+                        @elseif($tierStanding->next)
+                            @php $nx = $tierStanding->next; @endphp
+                            <div class="quant-tier__progress">
+                                <div class="quant-tier__progress-bar">
+                                    <span style="width: {{ $tierStanding->progress }}%; background: {{ $nx['color'] }};"></span>
+                                </div>
+                                <div class="quant-tier__progress-meta">
+                                    <span>{{ $tierStanding->progress }}%</span>
+                                    <span>{{ showAmount($tierStanding->needed) }} {{ $general->cur_text }} @lang('to') {{ $nx['emoji'] }} {{ __($nx['name']) }}</span>
+                                </div>
+                            </div>
+                        @endif
+                    </div>
+                </div>
+            @else
+                <div class="quant-tier quant-tier--none">
+                    <div class="quant-tier__badge quant-tier__badge--muted">
+                        <span class="quant-tier__emoji"><i class="las la-medal"></i></span>
+                    </div>
+                    <div class="quant-tier__info">
+                        <div class="quant-tier__head">
+                            <span class="quant-tier__name">@lang('No Membership Status')</span>
+                            <span class="quant-tier__amount">@lang('Invest to unlock your first tier')</span>
+                        </div>
+                        @php $first = \App\Lib\TierProgram::tiers()[0]; @endphp
+                        <div class="quant-tier__progress">
+                            <div class="quant-tier__progress-bar">
+                                <span style="width: {{ $tierStanding->progress }}%; background: {{ $first['color'] }};"></span>
+                            </div>
+                            <div class="quant-tier__progress-meta">
+                                <span>{{ $tierStanding->progress }}%</span>
+                                <span>{{ showAmount($tierStanding->needed) }} {{ $general->cur_text }} @lang('to') {{ $first['emoji'] }} {{ __($first['name']) }}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            @endif
+        </div>
+    </div>
+
+    {{-- Invested strategies / programs --}}
+    <div class="quant-panel quant-invested">
+        <div class="quant-panel__head quant-panel__head--aligned">
+            <div>
+                <h5 class="quant-panel__title">@lang('Your Strategies')</h5>
+                <p class="quant-panel__desc">@lang('Programs you are currently invested in')</p>
+            </div>
+            <a href="{{ route('user.invest.statistics') }}" class="quant-panel__link">@lang('Details') <i class="las la-arrow-right"></i></a>
+        </div>
+        <div class="quant-panel__body">
+            @if($investedStrategies->count())
+                <div class="quant-invested__list">
+                    @foreach($investedStrategies as $st)
+                    <div class="quant-invested__row">
+                        <div class="quant-invested__identity">
+                            <span class="quant-invested__icon"><i class="las la-layer-group"></i></span>
+                            <div class="quant-invested__heading">
+                                <span class="quant-invested__name">{{ __($st->name) }}</span>
+                                @if($st->frequency_label)
+                                    <span class="quant-panel__tag">{{ $st->frequency_label }}</span>
+                                @else
+                                    <span class="quant-invested__type">@lang('Program')</span>
+                                @endif
+                            </div>
+                        </div>
+                        <div class="quant-invested__figure">
+                            <span class="quant-invested__figure-label">@lang('Invested')</span>
+                            <span class="quant-invested__amount">{{ showAmount($st->invested_amount ?: $st->running_amount) }} <small>{{ $general->cur_text }}</small></span>
+                            @if($st->returns_amount > 0)
+                                <span class="quant-invested__sub">+{{ showAmount($st->returns_amount) }} {{ $general->cur_text }} @lang('returns') · {{ showAmount($st->running_amount) }} @lang('value')</span>
+                            @endif
+                        </div>
+                        <div class="quant-invested__meta">
+                            @if($st->running_count)
+                                <span class="quant-invested__status quant-invested__status--active">
+                                    <span class="quant-live-dot quant-live-dot--active"></span>
+                                    {{ $st->running_count }} @lang('active')
+                                </span>
+                            @endif
+                            @if($st->completed_count)
+                                <span class="quant-invested__status">
+                                    <i class="las la-check-circle"></i> {{ $st->completed_count }} @lang('completed')
+                                </span>
+                            @endif
+                        </div>
+                    </div>
+                    @endforeach
+                </div>
+            @else
+                <div class="quant-invested__empty">
+                    <i class="las la-seedling"></i>
+                    <div>
+                        <strong>@lang('No active investments yet')</strong>
+                        <p class="mb-0">@lang('Explore our strategies and start investing.') <a href="{{ route('plan') }}">@lang('View strategies')</a></p>
+                    </div>
+                </div>
+            @endif
+        </div>
+    </div>
+
     {{-- Main analytics row — portfolio return --}}
     <div class="row g-4 quant-main-row align-items-stretch">
         <div class="col-xl-8">
@@ -179,6 +304,10 @@
                         <i class="las la-info-circle"></i>
                         @lang('Allocation reflects Crownmaire Capital\'s quant model distribution. Positions are monitored and adjusted by the AI engine in real time.')
                     </p>
+
+                    <a href="{{ route('user.portfolio') }}" class="quant-allocation-btn">
+                        <i class="las la-chart-pie"></i> @lang('See allocation in detail')
+                    </a>
                 </div>
             </div>
         </div>
@@ -436,6 +565,25 @@
         color: #1989BE;
         margin-right: 4px;
     }
+    .quant-allocation-btn {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        margin-top: 12px;
+        padding: 11px 16px;
+        border-radius: 10px;
+        background: #1989BE;
+        color: #fff;
+        font-size: 0.85rem;
+        font-weight: 600;
+        text-decoration: none;
+        transition: background 0.2s ease;
+    }
+    .quant-allocation-btn:hover {
+        background: #146a96;
+        color: #fff;
+    }
     .quant-main-row > .col-xl-4 {
         display: flex;
     }
@@ -473,6 +621,158 @@
             width: 100%;
         }
     }
+    .quant-invested {
+        margin-bottom: 24px;
+    }
+    .quant-invested__list {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+    }
+    .quant-invested__row {
+        display: flex;
+        align-items: center;
+        gap: 20px;
+        border: 1px solid var(--quant-border, #e5e5e5);
+        border-radius: 14px;
+        padding: 16px 20px;
+        background: #fff;
+        transition: box-shadow .2s ease, border-color .2s ease;
+    }
+    .quant-invested__row:hover {
+        border-color: rgba(25, 137, 190, 0.35);
+        box-shadow: 0 6px 20px rgba(25, 137, 190, 0.08);
+    }
+    .quant-invested__identity {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        flex: 1 1 auto;
+        min-width: 0;
+    }
+    .quant-invested__icon {
+        width: 44px;
+        height: 44px;
+        border-radius: 12px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.25rem;
+        background: var(--quant-primary-light, #e8f4fa);
+        color: var(--quant-primary, #1989BE);
+        flex-shrink: 0;
+    }
+    .quant-invested__heading {
+        display: flex;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 10px;
+        min-width: 0;
+    }
+    .quant-invested__name {
+        font-family: "Maven Pro", sans-serif;
+        font-weight: 700;
+        color: var(--quant-text, #1a1a1a);
+        font-size: 1rem;
+        line-height: 1.2;
+    }
+    .quant-invested__type {
+        font-size: 0.6875rem;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: #94a3b8;
+        background: #f1f5f9;
+        padding: 4px 10px;
+        border-radius: 6px;
+    }
+    .quant-invested__figure {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+        text-align: right;
+        flex-shrink: 0;
+    }
+    .quant-invested__figure-label {
+        font-size: 0.6875rem;
+        font-weight: 600;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        color: #94a3b8;
+    }
+    .quant-invested__amount {
+        font-family: "Maven Pro", sans-serif;
+        font-size: 1.25rem;
+        font-weight: 700;
+        color: var(--quant-text, #1a1a1a);
+        line-height: 1.1;
+    }
+    .quant-invested__amount small {
+        font-size: 0.75rem;
+        font-weight: 500;
+        color: var(--quant-text-muted, #888);
+    }
+    .quant-invested__sub {
+        display: block;
+        margin-top: 4px;
+        font-size: 0.72rem;
+        font-weight: 600;
+        color: #16a34a;
+    }
+    .quant-invested__meta {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: flex-end;
+        gap: 16px;
+        flex-shrink: 0;
+        min-width: 150px;
+    }
+    .quant-invested__status {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        color: #888;
+        white-space: nowrap;
+    }
+    .quant-invested__status--active {
+        color: var(--quant-profit, #16a34a);
+    }
+    .quant-invested__status i {
+        font-size: 0.95rem;
+    }
+    @media (max-width: 575px) {
+        .quant-invested__row {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 12px;
+        }
+        .quant-invested__identity {
+            width: 100%;
+        }
+        .quant-invested__figure {
+            text-align: left;
+        }
+        .quant-invested__meta {
+            justify-content: flex-start;
+            min-width: 0;
+        }
+    }
+    .quant-invested__empty {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        color: var(--quant-text-muted, #64748b);
+    }
+    .quant-invested__empty i {
+        font-size: 1.75rem;
+        color: var(--quant-primary, #1989BE);
+    }
+    .quant-invested__empty p {
+        font-size: 0.85rem;
+    }
     .strategy-chart-head {
         display: grid;
         grid-template-columns: 1fr auto 1fr;
@@ -492,6 +792,96 @@
         }
         .strategy-chart-head__right {
             justify-self: center;
+        }
+    }
+    .quant-tier-card {
+        margin-bottom: 24px;
+    }
+    .quant-tier {
+        display: flex;
+        align-items: center;
+        gap: 18px;
+    }
+    .quant-tier__badge {
+        --tier-color: #1989BE;
+        flex: 0 0 auto;
+        width: 56px;
+        height: 56px;
+        border-radius: 16px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: color-mix(in srgb, var(--tier-color) 15%, transparent);
+        border: 1px solid color-mix(in srgb, var(--tier-color) 35%, transparent);
+    }
+    .quant-tier__badge--muted {
+        --tier-color: #94a3b8;
+        background: rgba(148, 163, 184, 0.12);
+        border-color: rgba(148, 163, 184, 0.3);
+    }
+    .quant-tier__emoji {
+        font-size: 1.7rem;
+        line-height: 1;
+        color: var(--tier-color);
+    }
+    .quant-tier__info {
+        flex: 1 1 auto;
+        min-width: 0;
+    }
+    .quant-tier__head {
+        display: flex;
+        align-items: baseline;
+        flex-wrap: wrap;
+        gap: 4px 12px;
+        margin-bottom: 8px;
+    }
+    .quant-tier__name {
+        font-size: 1.15rem;
+        font-weight: 700;
+        color: var(--quant-text, #0f172a);
+    }
+    .quant-tier__amount {
+        font-size: 0.82rem;
+        color: var(--quant-text-muted, #64748b);
+    }
+    .quant-tier__top {
+        font-size: 0.88rem;
+        font-weight: 600;
+        color: #d4a017;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+    .quant-tier__progress-bar {
+        position: relative;
+        height: 8px;
+        border-radius: 999px;
+        background: rgba(148, 163, 184, 0.2);
+        overflow: hidden;
+    }
+    .quant-tier__progress-bar span {
+        position: absolute;
+        inset: 0 auto 0 0;
+        height: 100%;
+        border-radius: 999px;
+        transition: width 0.4s ease;
+    }
+    .quant-tier__progress-meta {
+        display: flex;
+        justify-content: space-between;
+        gap: 12px;
+        margin-top: 6px;
+        font-size: 0.78rem;
+        color: var(--quant-text-muted, #64748b);
+    }
+    .quant-tier__progress-meta span:first-child {
+        font-weight: 600;
+        color: var(--quant-text, #0f172a);
+    }
+    @media (max-width: 480px) {
+        .quant-tier {
+            align-items: flex-start;
+            gap: 14px;
         }
     }
 </style>
@@ -528,6 +918,7 @@ var roiOptions = {
         gradient: { shadeIntensity: 1, opacityFrom: 0.35, opacityTo: 0.05, stops: [0, 90, 100] }
     },
     stroke: { curve: 'smooth', width: 2 },
+    markers: { size: 4, strokeColors: '#ffffff', strokeWidth: 2, hover: { size: 6 } },
     xaxis: {
         categories: portfolioLabels.length ? portfolioLabels : [],
         labels: {
@@ -539,7 +930,6 @@ var roiOptions = {
         axisTicks: { show: false }
     },
     yaxis: {
-        title: { text: '@lang("Return %")', style: { color: quantChartTheme.muted, fontSize: '11px' } },
         labels: {
             style: { colors: quantChartTheme.muted, fontSize: '11px' },
             formatter: v => v.toFixed(2) + '%'
@@ -561,11 +951,25 @@ if (document.querySelector("#chart")) {
     new ApexCharts(document.querySelector("#chart"), roiOptions).render();
 }
 
+@php
+    $allocationData = ($allocations ?? collect())->map(function ($a) {
+        return ['name' => $a->name, 'value' => (float) $a->percentage, 'color' => $a->color];
+    });
+    if ($allocationData->isEmpty()) {
+        $allocationData = collect([
+            ['name' => 'Forex',       'value' => 20, 'color' => '#1989BE'],
+            ['name' => 'Indices',     'value' => 18, 'color' => '#14709a'],
+            ['name' => 'Commodities', 'value' => 33, 'color' => '#47a8d4'],
+            ['name' => 'Futures',     'value' => 15, 'color' => '#7fc4e8'],
+            ['name' => 'Crypto',      'value' => 14, 'color' => '#b3dff5'],
+        ]);
+    }
+@endphp
 var allocationOptions = {
     chart: { type: 'donut', height: 230, fontFamily: 'Maven Pro, sans-serif' },
-    labels: ['Forex', 'Indices', 'Commodities', 'Futures', 'Crypto'],
-    series: [20, 18, 33, 15, 14],
-    colors: ['#1989BE', '#14709a', '#47a8d4', '#7fc4e8', '#b3dff5'],
+    labels: [@foreach($allocationData as $a)'{{ addslashes($a['name']) }}',@endforeach],
+    series: [@foreach($allocationData as $a){{ $a['value'] }},@endforeach],
+    colors: [@foreach($allocationData as $a)'{{ $a['color'] }}',@endforeach],
     legend: {
         position: 'bottom',
         fontSize: '11px',
@@ -631,7 +1035,7 @@ function buildStrategyChartOptions(data) {
             title: { show: false },
             labels: { formatter: v => v.toFixed(2) + '%', style: { colors: quantChartTheme.muted, fontSize: '11px' } }
         },
-        grid: { borderColor: quantChartTheme.grid, strokeDashArray: 4, padding: { left: 8, right: 16 } },
+        grid: { borderColor: quantChartTheme.grid, strokeDashArray: 4, padding: { left: 0, right: 0, top: 0, bottom: 0 } },
         dataLabels: { enabled: false },
         legend: { show: false },
         tooltip: {

@@ -1,6 +1,6 @@
 export default {
   expo: {
-    name: 'CrownMaire',
+    name: 'Crownmaire Capital',
     slug: 'crownmaire-portal',
     owner: 'abdulshera',
     version: '1.1.0',
@@ -11,7 +11,7 @@ export default {
     splash: {
       image: './assets/splash-icon.png',
       resizeMode: 'contain',
-      backgroundColor: '#f2f3f5',
+      backgroundColor: '#ffffff',
     },
     ios: {
       supportsTablet: true,
@@ -20,15 +20,29 @@ export default {
     android: {
       package: 'com.crownmaire.portal',
       adaptiveIcon: {
-        backgroundColor: '#1989BE',
+        backgroundColor: '#ffffff',
         foregroundImage: './assets/android-icon-foreground.png',
-        backgroundImage: './assets/android-icon-background.png',
+        monochromeImage: './assets/android-icon-monochrome.png',
       },
     },
     web: {
       favicon: './assets/favicon.png',
     },
-    plugins: ['expo-router', 'expo-secure-store', 'expo-splash-screen', 'expo-web-browser', 'expo-font'],
+    plugins: [
+      'expo-router',
+      'expo-secure-store',
+      [
+        'expo-splash-screen',
+        {
+          image: './assets/splash-icon.png',
+          resizeMode: 'contain',
+          backgroundColor: '#ffffff',
+          imageWidth: 240,
+        },
+      ],
+      'expo-web-browser',
+      'expo-font',
+    ],
     extra: {
       apiUrl: process.env.EXPO_PUBLIC_API_URL || 'https://crownmairecapital.com/api',
       siteUrl: process.env.EXPO_PUBLIC_SITE_URL || 'https://crownmairecapital.com',

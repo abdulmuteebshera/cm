@@ -481,6 +481,14 @@
     .quant-header__aside .quant-badge--ai {
         flex-shrink: 0;
         white-space: nowrap;
+        box-sizing: border-box;
+        height: 36px;
+        display: inline-flex;
+        align-items: center;
+        line-height: 1;
+    }
+    .quant-header__aside .quant-badge--ai {
+        border: 1px solid transparent;
     }
     .quant-header__ytd {
         margin: 0;

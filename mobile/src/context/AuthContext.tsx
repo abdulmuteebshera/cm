@@ -3,6 +3,7 @@ import { Image } from 'react-native';
 import { clearToken, extractErrors, getToken, saveToken } from '../api/client';
 import { authService, getMessage, publicService, userService } from '../api/services';
 import { ApiResponse, GeneralSetting, User } from '../api/types';
+import { session } from '../state/session';
 
 type AuthState = 'loading' | 'guest' | 'verify' | 'profile' | 'authenticated';
 
@@ -107,6 +108,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       // ignore
     }
     await clearToken();
+    session.introShown = false;
     setUser(null);
   }, []);
 

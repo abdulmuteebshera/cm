@@ -35,7 +35,22 @@ export const DRAWER_SECTIONS: { title: string; links: PortalLink[] }[] = [
     title: 'Insights',
     links: [
       { label: 'Strategy Performance', path: '/user/strategy-performance', icon: 'analytics-outline' },
+      { label: 'Portfolio Allocation', path: '/user/portfolio-allocation', icon: 'pie-chart-outline' },
+      { label: 'Membership Tiers', path: '/user/tiers', icon: 'ribbon-outline' },
+      { label: 'Leaderboard', path: '/user/leaderboard', icon: 'trophy-outline' },
+      { label: 'Certificates', path: '/user/certificates', icon: 'medal-outline' },
+    ],
+  },
+  {
+    title: 'Rewards & Network',
+    links: [
       { label: 'Referrals', path: '/user/referrals', icon: 'people-outline' },
+    ],
+  },
+  {
+    title: 'Updates',
+    links: [
+      { label: 'Announcements', path: '/user/announcements', icon: 'megaphone-outline' },
     ],
   },
   {
@@ -60,6 +75,12 @@ export const WALLET_LINKS: PortalLink[] = [
 ];
 
 export const ACCOUNT_LINKS: PortalLink[] = [
+  { label: 'Membership Tiers', path: '/user/tiers', icon: 'ribbon-outline' },
+  { label: 'Leaderboard', path: '/user/leaderboard', icon: 'trophy-outline' },
+  { label: 'Certificates', path: '/user/certificates', icon: 'medal-outline' },
+  { label: 'Portfolio Allocation', path: '/user/portfolio-allocation', icon: 'pie-chart-outline' },
+  { label: 'Announcements', path: '/user/announcements', icon: 'megaphone-outline' },
+  { label: 'Referrals', path: '/user/referrals', icon: 'people-outline' },
   { label: 'My Profile', path: '/user/profile-setting', icon: 'person-outline' },
   { label: 'Change Password', path: '/user/change-password', icon: 'lock-closed-outline' },
   { label: 'Two-Factor Auth', path: '/user/twofactor', icon: 'shield-checkmark-outline' },
@@ -95,6 +116,11 @@ export function isAuthenticatedPortalUrl(url: string) {
     lower.includes('/user/transactions') ||
     lower.includes('/user/strategy') ||
     lower.includes('/user/referrals') ||
+    lower.includes('/user/tiers') ||
+    lower.includes('/user/leaderboard') ||
+    lower.includes('/user/certificates') ||
+    lower.includes('/user/portfolio') ||
+    lower.includes('/user/announcements') ||
     lower.includes('/user/twofactor') ||
     lower.includes('/user/kyc') ||
     lower.includes('/user/authorization') ||

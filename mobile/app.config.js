@@ -11,7 +11,7 @@ export default {
     splash: {
       image: './assets/splash-icon.png',
       resizeMode: 'contain',
-      backgroundColor: '#ffffff',
+      backgroundColor: '#000000',
     },
     ios: {
       supportsTablet: true,
@@ -36,7 +36,7 @@ export default {
         {
           image: './assets/splash-icon.png',
           resizeMode: 'contain',
-          backgroundColor: '#ffffff',
+          backgroundColor: '#000000',
           imageWidth: 240,
         },
       ],

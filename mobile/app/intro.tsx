@@ -97,7 +97,7 @@ export default function IntroScreen() {
 
   return (
     <View style={styles.container}>
-      <StatusBar style="light" />
+      <StatusBar style="dark" />
       <Animated.View style={[styles.glow, { opacity: glow, transform: [{ scale: glowScale }] }]} />
 
       <Animated.View style={[styles.logoWrap, { transform: [{ scale: logoScale }] }]}>
@@ -135,7 +135,7 @@ export default function IntroScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#000000',
+    backgroundColor: colors.white,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -144,7 +144,7 @@ const styles = StyleSheet.create({
     width: 460,
     height: 460,
     borderRadius: 230,
-    backgroundColor: 'rgba(25, 137, 190, 0.20)',
+    backgroundColor: colors.primaryLight,
     top: '24%',
   },
   logoWrap: {
@@ -172,7 +172,7 @@ const styles = StyleSheet.create({
   tagline: {
     fontSize: 14,
     letterSpacing: 1.5,
-    color: 'rgba(255, 255, 255, 0.88)',
+    color: colors.primaryDark,
     fontWeight: '600',
     textTransform: 'uppercase',
     textAlign: 'center',

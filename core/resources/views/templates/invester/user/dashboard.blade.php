@@ -383,7 +383,7 @@
             @forelse($strategyCharts as $strategyChart)
             <div class="quant-panel {{ !$loop->last ? 'mb-4' : '' }}">
                 <div class="quant-panel__head quant-panel__head--aligned">
-                    <div class="d-flex justify-content-between align-items-center w-100 flex-wrap gap-2 strategy-chart-head">
+                    <div class="strategy-chart-head">
                         <div class="strategy-chart-head__left">
                             <h5 class="quant-panel__title mb-0">{{ __($strategyChart->plan_name) }}</h5>
                             <small class="text-muted">{{ $strategyChartYear ?? date('Y') }}</small>
@@ -603,7 +603,7 @@
         }
         .quant-header__aside .quant-header__meta {
             justify-content: flex-start;
-            flex-wrap: wrap;
+            flex-wrap: nowrap;
         }
         .quant-header__ytd {
             min-width: 0;
@@ -627,6 +627,20 @@
         .quant-header__ytd-value {
             text-align: left;
             width: 100%;
+        }
+        /* Keep the date + AI Quant Engine pills on a single row */
+        .quant-header__aside .quant-header__meta {
+            gap: 8px;
+        }
+        .quant-header__aside .quant-date,
+        .quant-header__aside .quant-badge--ai {
+            height: 34px;
+            padding: 8px 10px;
+            font-size: 0.7rem;
+        }
+        .quant-header__aside .quant-date i,
+        .quant-header__aside .quant-badge--ai i {
+            font-size: 0.85rem;
         }
     }
     .quant-invested {
@@ -796,10 +810,13 @@
     @media (max-width: 575px) {
         .strategy-chart-head {
             grid-template-columns: 1fr;
-            text-align: center;
+            text-align: left;
+            gap: 6px;
         }
+        .strategy-chart-head__center,
         .strategy-chart-head__right {
-            justify-self: center;
+            justify-self: start;
+            text-align: left !important;
         }
     }
     .quant-tier-card {

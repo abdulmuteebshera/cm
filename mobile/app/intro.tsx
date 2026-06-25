@@ -1,4 +1,5 @@
 import { router } from 'expo-router';
+import { StatusBar } from 'expo-status-bar';
 import { useEffect, useRef } from 'react';
 import { Animated, Easing, Image, StyleSheet, View } from 'react-native';
 import { colors } from '../src/theme/colors';
@@ -96,6 +97,7 @@ export default function IntroScreen() {
 
   return (
     <View style={styles.container}>
+      <StatusBar style="light" />
       <Animated.View style={[styles.glow, { opacity: glow, transform: [{ scale: glowScale }] }]} />
 
       <Animated.View style={[styles.logoWrap, { transform: [{ scale: logoScale }] }]}>
@@ -133,7 +135,7 @@ export default function IntroScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.white,
+    backgroundColor: '#000000',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -142,7 +144,7 @@ const styles = StyleSheet.create({
     width: 460,
     height: 460,
     borderRadius: 230,
-    backgroundColor: colors.primaryLight,
+    backgroundColor: 'rgba(25, 137, 190, 0.20)',
     top: '24%',
   },
   logoWrap: {
@@ -170,7 +172,7 @@ const styles = StyleSheet.create({
   tagline: {
     fontSize: 14,
     letterSpacing: 1.5,
-    color: colors.body,
+    color: 'rgba(255, 255, 255, 0.88)',
     fontWeight: '600',
     textTransform: 'uppercase',
     textAlign: 'center',

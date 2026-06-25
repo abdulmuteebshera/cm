@@ -5,7 +5,6 @@ import { colors } from '../../src/theme/colors';
 
 export default function TabsLayout() {
   const insets = useSafeAreaInsets();
-  const bottomInset = Math.max(insets.bottom, 8);
 
   return (
     <Tabs
@@ -16,8 +15,8 @@ export default function TabsLayout() {
         tabBarStyle: {
           backgroundColor: colors.surface,
           borderTopColor: colors.border,
-          height: 58 + bottomInset,
-          paddingBottom: bottomInset,
+          height: 62 + insets.bottom,
+          paddingBottom: insets.bottom + 8,
           paddingTop: 8,
         },
         tabBarLabelStyle: { fontSize: 11, fontWeight: '600' },

@@ -8,7 +8,7 @@
     <title> {{ $general->siteName(__($pageTitle)) }}</title>
     @include('partials.seo')
 
-    @php $isLanding = request()->routeIs('home', 'about', 'contact'); @endphp
+    @php $isLanding = isCrownmaireLanding(); @endphp
 
     @if ($isLanding)
         <link rel="preconnect" href="https://fonts.googleapis.com">

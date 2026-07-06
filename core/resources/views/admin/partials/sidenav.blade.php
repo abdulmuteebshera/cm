@@ -177,6 +177,20 @@
                     </a>
                 </li>
 
+                <li class="sidebar-menu-item {{ menuActive('admin.job.post.index') }}">
+                    <a href="{{ route('admin.job.post.index') }}" class="nav-link ">
+                        <i class="menu-icon las la-briefcase"></i>
+                        <span class="menu-title">@lang('Job Opportunities')</span>
+                    </a>
+                </li>
+
+                <li class="sidebar-menu-item {{ menuActive('admin.job.application.index') }}">
+                    <a href="{{ route('admin.job.application.index') }}" class="nav-link ">
+                        <i class="menu-icon las la-user-tie"></i>
+                        <span class="menu-title">@lang('Job Applications')</span>
+                    </a>
+                </li>
+
                 <li class="sidebar-menu-item {{ menuActive('admin.leaderboard.index') }}">
                     <a href="{{ route('admin.leaderboard.index') }}" class="nav-link ">
                         <i class="menu-icon las la-trophy"></i>

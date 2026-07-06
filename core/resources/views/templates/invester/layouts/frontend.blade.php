@@ -1,6 +1,6 @@
 @extends($activeTemplate . 'layouts.app')
 @section('panel')
-    @php $isLanding = request()->routeIs('home', 'about', 'contact'); @endphp
+    @php $isLanding = isCrownmaireLanding(); @endphp
 
     @if ($isLanding)
         @include($activeTemplate . 'partials.cm-header')

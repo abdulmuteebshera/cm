@@ -132,7 +132,7 @@ class InvestController extends Controller
         $invests    = Invest::where('user_id', auth()->id())->orderBy('id', 'desc')->with('plan.timeSetting')->paginate(getPaginate(10));
         $activePlan = Invest::where('user_id', auth()->id())->where('status', 1)->count();
 
-        $investChart = Invest::where('user_id', auth()->id())->with('plan')->groupBy('plan_id')->select('plan_id')->selectRaw("SUM(amount) as investAmount")->orderBy('investAmount', 'desc')->get();
+        $investChart = Invest::where('user_id', auth()->id())->with('plan')->groupBy('plan_id')->select('plan_id')->selectRaw('SUM(initial_amount) as investAmount')->orderBy('investAmount', 'desc')->get();
         return view(activeTemplate() . 'user.invest_statistics', compact('pageTitle', 'invests', 'investChart', 'activePlan'));
     }
 

@@ -21,3 +21,9 @@ core/storage/framework/views/*
 Thumbs.db
 .idea/
 .vscode/
+
+# User uploads (keep on server, not in git)
+assets/files/job-resumes/*
+!assets/files/job-resumes/.gitkeep
+assets/verify/**
+!assets/verify/.gitkeep

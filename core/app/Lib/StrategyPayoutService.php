@@ -893,10 +893,7 @@ class StrategyPayoutService
                 if ($invest) {
                     $invest->paid = max(0, (float) $invest->paid - (float) $item->amount);
                     $invest->return_rec_time = max(0, (int) $invest->return_rec_time - 1);
-                    if ($periodReturn->plan) {
-                        $invest->next_time = self::nextInvestPayoutDate($invest, $periodReturn->plan)->toDateTimeString();
-                    }
-                    $invest->save();
+                    self::syncInvestNextPayoutTime($invest, $periodReturn->plan);
                 }
 
                 if ($item->transaction_id) {
@@ -1117,27 +1114,85 @@ class StrategyPayoutService
         ];
     }
 
+    /**
+     * First payout cycle not yet paid via an approved period payout.
+     * Anchored to invest created_at — never shifts when admin approves late.
+     */
+    public static function firstUnpaidCycleIndex(Invest $invest, Plan $plan): int
+    {
+        for ($cycle = 0; $cycle < 120; $cycle++) {
+            $schedule = self::investCycleSchedule($invest, $plan, $cycle);
+
+            if (!$schedule) {
+                return max(0, $cycle - 1);
+            }
+
+            if (!self::investCycleIsPaid($invest, $plan, $cycle)) {
+                return $cycle;
+            }
+        }
+
+        return 0;
+    }
+
+    /** Cycle whose fixed payout_date matches the given date (null if none). */
+    public static function cycleIndexForPayoutDate(Invest $invest, Plan $plan, CarbonInterface|string $payoutDate): ?int
+    {
+        $target = Carbon::parse($payoutDate)->toDateString();
+
+        for ($cycle = 0; $cycle < 120; $cycle++) {
+            $schedule = self::investCycleSchedule($invest, $plan, $cycle);
+
+            if (!$schedule) {
+                return null;
+            }
+
+            if ($schedule['payout_date']->toDateString() === $target) {
+                return $cycle;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Next fixed calendar payout date for this investment (from created_at anchor).
+     * Does not depend on when admin approves — only on which cycles are unpaid.
+     */
     public static function nextInvestPayoutDate(Invest $invest, Plan $plan, ?CarbonInterface $from = null): Carbon
     {
-        $cycle = (int) ($invest->return_rec_time ?? 0);
+        $fromDay    = $from ? Carbon::parse($from)->startOfDay() : null;
+        $startCycle = self::firstUnpaidCycleIndex($invest, $plan);
 
-        while (true) {
+        for ($cycle = $startCycle; $cycle < $startCycle + 120; $cycle++) {
             $schedule = self::investCycleSchedule($invest, $plan, $cycle);
 
             if (!$schedule) {
                 break;
             }
 
-            if (!$from || $schedule['payout_date']->gte(Carbon::parse($from)->startOfDay())) {
-                return $schedule['payout_date']->copy();
+            if (!$fromDay || $schedule['payout_date']->gte($fromDay)) {
+                return $schedule['payout_date']->copy()->startOfDay();
             }
-
-            $cycle++;
         }
 
-        $fallback = self::investPeriodAnchor($invest)->copy()->addMonths(self::planPeriodMonths($plan));
+        $months   = self::planPeriodMonths($plan);
+        $fallback = self::investPeriodAnchor($invest)->copy()->addMonths($months);
 
         return self::periodPayoutDate($fallback->subDay());
+    }
+
+    /** Recompute next_time from the fixed cycle schedule (safe to call after approve/reverse). */
+    public static function syncInvestNextPayoutTime(Invest $invest, ?Plan $plan = null): void
+    {
+        $plan = $plan ?? ($invest->relationLoaded('plan') ? $invest->plan : Plan::find($invest->plan_id));
+
+        if (!$plan || !$plan->isStrategy()) {
+            return;
+        }
+
+        $invest->next_time = self::nextInvestPayoutDate($invest, $plan)->toDateTimeString();
+        $invest->save();
     }
 
     public static function nextPeriodEnd(Plan $plan, ?CarbonInterface $from = null): Carbon
@@ -1439,8 +1494,7 @@ class StrategyPayoutService
                 continue;
             }
 
-            $invest->next_time = self::nextInvestPayoutDate($invest, $invest->plan)->toDateTimeString();
-            $invest->save();
+            self::syncInvestNextPayoutTime($invest, $invest->plan);
         }
     }
 
@@ -1474,7 +1528,7 @@ class StrategyPayoutService
                 ->get();
 
             foreach ($invests as $invest) {
-                $cycle    = (int) ($invest->return_rec_time ?? 0);
+                $cycle    = self::firstUnpaidCycleIndex($invest, $strategyPlan);
                 $schedule = self::investCycleSchedule($invest, $strategyPlan, $cycle);
 
                 if (!$schedule || !$schedule['is_enterable']) {
@@ -1539,7 +1593,6 @@ class StrategyPayoutService
         }
 
         self::cleanupStalePeriodReturnRecords($plan);
-        self::refreshInvestNextPayoutTimes($plan);
 
         return $synced;
     }
@@ -1547,8 +1600,7 @@ class StrategyPayoutService
     public static function advanceInvestAfterPayout(Invest $invest, Plan $plan): void
     {
         $invest->return_rec_time = (int) ($invest->return_rec_time ?? 0) + 1;
-        $invest->next_time       = self::nextInvestPayoutDate($invest, $plan)->toDateTimeString();
-        $invest->save();
+        self::syncInvestNextPayoutTime($invest, $plan);
     }
 
     /**
@@ -1778,10 +1830,15 @@ class StrategyPayoutService
         $total = 0.0;
 
         foreach ($invests as $invest) {
-            $cycle    = (int) ($invest->return_rec_time ?? 0);
+            $cycle = self::cycleIndexForPayoutDate($invest, $plan, $payoutDate);
+
+            if ($cycle === null) {
+                continue;
+            }
+
             $schedule = self::investCycleSchedule($invest, $plan, $cycle);
 
-            if (!$schedule || $schedule['payout_date']->toDateString() !== $payoutDate->toDateString()) {
+            if (!$schedule) {
                 continue;
             }
 

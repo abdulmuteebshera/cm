@@ -31,6 +31,13 @@ Route::controller('SiteController')->group(function () {
     Route::post('/add/device/token', 'getDeviceToken')->name('add.device.token');
     
     Route::get('/about', 'about')->name('about');
+    Route::get('/platform', 'platform')->name('platform');
+    Route::get('/insights', 'insights')->name('insights');
+    Route::get('/markets', 'markets')->name('markets');
+    Route::get('/strategies', 'strategies')->name('strategies');
+    Route::get('/careers', 'careers')->name('careers');
+    Route::get('/careers/apply/{id}', 'careerApply')->name('careers.apply');
+    Route::post('/careers/apply/{id}', 'careerApplySubmit')->name('careers.apply.submit');
     Route::get('/contact', 'contact')->name('contact');
     Route::post('/contact', 'contactSubmit');
     Route::get('/change/{lang?}', 'changeLanguage')->name('lang');

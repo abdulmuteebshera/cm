@@ -68,6 +68,9 @@ class FileInfo
         $data['strategyReport'] = [
             'path' => 'assets/files/strategy-reports',
         ];
+        $data['jobResume'] = [
+            'path' => 'assets/files/job-resumes',
+        ];
         return $data;
 	}
 

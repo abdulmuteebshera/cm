@@ -1,7 +1,6 @@
 @extends($activeTemplate . 'layouts.frontend')
 @section('content')
     @php
-        $cm = 'https://crownmaire.com/wp-content/uploads';
         $pillars = [
             ['icon' => 'la-brain', 'title' => 'Quantitative Precision Across Global Markets', 'text' => 'Our investment approach is rooted in data science, machine learning, and real-time algorithmic execution. Decisions are informed by proprietary quantitative models designed to identify market inefficiencies and generate risk-adjusted returns across multiple asset classes.'],
             ['icon' => 'la-layer-group', 'title' => 'Multi-Asset Exposure with Structured Yield', 'text' => 'Crownmaire manages diversified exposure across currencies, indices, commodities, futures, and select equities. Portfolios are structured to balance opportunity with risk, allowing flexibility and adaptability across varying market conditions.'],
@@ -37,7 +36,6 @@
 
             <div class="cm-hero__stage cm-reveal cm-reveal--delay" id="cmHeroStage">
                 <div class="cm-hero__stage-glow" aria-hidden="true"></div>
-
                 <div class="cm-command">
                     <div class="cm-command__bar">
                         <div class="cm-command__brand">
@@ -138,7 +136,7 @@
         </div>
     </section>
 
-    {{-- Dashboard --}}
+    {{-- Platform preview --}}
     <section class="cm-section cm-section--alt" id="dashboard">
         <div class="cm-container">
             <div class="cm-split">
@@ -151,11 +149,7 @@
                         <li><i class="las la-chart-pie"></i> @lang('Portfolio allocation visibility')</li>
                         <li><i class="las la-file-invoice-dollar"></i> @lang('Capital activity reporting')</li>
                     </ul>
-                    @if (auth()->check())
-                        <a href="{{ route('user.home') }}" class="cm-btn cm-btn--accent"><i class="las la-th-large"></i> @lang('Open Dashboard')</a>
-                    @else
-                        <a href="{{ route('contact') }}" class="cm-btn cm-btn--accent">@lang('Request Invitation')</a>
-                    @endif
+                    <a href="{{ route('platform') }}" class="cm-btn cm-btn--accent"><i class="las la-th-large"></i> @lang('Explore the Platform')</a>
                 </div>
                 <div class="cm-split__media cm-reveal cm-reveal--delay">
                     <div class="cm-platform-shot">
@@ -275,9 +269,9 @@
 @endsection
 
 @push('style')
-    <link rel="stylesheet" href="{{ asset($activeTemplateTrue . 'css/crownmaire-landing.css') }}?v=17">
+    <link rel="stylesheet" href="{{ asset($activeTemplateTrue . 'css/crownmaire-landing.css') }}?v=20">
 @endpush
 
 @push('script')
-    <script src="{{ asset($activeTemplateTrue . 'js/crownmaire-landing.js') }}?v=17" defer></script>
+    <script src="{{ asset($activeTemplateTrue . 'js/crownmaire-landing.js') }}?v=20" defer></script>
 @endpush

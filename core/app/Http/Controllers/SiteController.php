@@ -6,6 +6,8 @@ use App\Models\AdminNotification;
 use App\Models\DeviceToken;
 use App\Models\Frontend;
 use App\Models\GatewayCurrency;
+use App\Models\JobPost;
+use App\Models\JobApplication;
 use App\Models\Language;
 use App\Models\Page;
 use App\Models\Plan;
@@ -13,6 +15,8 @@ use App\Models\Subscriber;
 use App\Models\SupportMessage;
 use App\Models\SupportTicket;
 use App\Models\TimeSetting;
+use App\Rules\FileTypeValidate;
+use App\Services\MarketNewsService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cookie;
@@ -43,6 +47,103 @@ class SiteController extends Controller
     {
         $pageTitle = 'About';
         return view($this->activeTemplate . 'about', compact('pageTitle'));
+    }
+
+    public function insights()
+    {
+        return redirect()->route('markets');
+    }
+
+    public function platform()
+    {
+        $pageTitle = 'Investor Platform';
+        return view($this->activeTemplate . 'platform', compact('pageTitle'));
+    }
+
+    public function markets(Request $request)
+    {
+        $pageTitle = 'Markets & Insights';
+        $marketNews = app(MarketNewsService::class);
+        $marketIndices = $marketNews->marketIndices();
+        $newsPage = max(1, min(MarketNewsService::NEWS_MAX_PAGES, (int) $request->get('page', 1)));
+        $newsData = $marketNews->paginatedNews($newsPage);
+        $financeNews = $newsData['items'];
+        $newsCurrentPage = $newsData['currentPage'];
+        $newsTotalPages = $newsData['totalPages'];
+
+        return view($this->activeTemplate . 'markets', compact(
+            'pageTitle',
+            'marketIndices',
+            'financeNews',
+            'newsCurrentPage',
+            'newsTotalPages'
+        ));
+    }
+
+    public function strategies()
+    {
+        $pageTitle = 'Investment Strategies';
+        return view($this->activeTemplate . 'strategies', compact('pageTitle'));
+    }
+
+    public function careers()
+    {
+        $pageTitle = 'Careers';
+        $jobPosts  = JobPost::active()->orderByDesc('id')->get();
+
+        return view($this->activeTemplate . 'careers', compact('pageTitle', 'jobPosts'));
+    }
+
+    public function careerApply($id)
+    {
+        $jobPost   = JobPost::active()->findOrFail($id);
+        $pageTitle = 'Apply — ' . $jobPost->title;
+
+        return view($this->activeTemplate . 'career-apply', compact('pageTitle', 'jobPost'));
+    }
+
+    public function careerApplySubmit(Request $request, $id)
+    {
+        $jobPost = JobPost::active()->findOrFail($id);
+
+        $request->validate([
+            'name'    => 'required|string|max:120',
+            'email'   => 'required|email|max:120',
+            'phone'   => 'nullable|string|max:50',
+            'linkedin'=> 'nullable|url|max:255',
+            'message' => 'required|string|min:20|max:5000',
+            'resume'  => ['required', 'file', 'max:5120', new FileTypeValidate(['pdf', 'doc', 'docx'])],
+        ]);
+
+        $directory = assetFilesystemPath(getFilePath('jobResume') . '/' . $jobPost->id);
+
+        try {
+            $filename = fileUploader($request->file('resume'), $directory);
+        } catch (\Exception $exception) {
+            $notify[] = ['error', 'Could not upload your resume. Please try again with a PDF or Word document.'];
+            return back()->withInput()->withNotify($notify);
+        }
+
+        $application = JobApplication::create([
+            'job_post_id'           => $jobPost->id,
+            'name'                  => $request->name,
+            'email'                 => $request->email,
+            'phone'                 => $request->phone,
+            'linkedin'              => $request->linkedin,
+            'message'               => $request->message,
+            'resume'                => $jobPost->id . '/' . $filename,
+            'resume_original_name'  => $request->file('resume')->getClientOriginalName(),
+            'application_status'    => JobApplication::STATUS_PENDING,
+        ]);
+
+        $adminNotification            = new AdminNotification();
+        $adminNotification->user_id   = auth()->id() ?? 0;
+        $adminNotification->title     = 'New job application: ' . $jobPost->title . ' — ' . $request->name;
+        $adminNotification->click_url = urlPath('admin.job.application.detail', $application->id);
+        $adminNotification->save();
+
+        $notify[] = ['success', 'Your application has been submitted successfully. Our team will review it and contact you if there is a fit.'];
+        return to_route('careers')->withNotify($notify);
     }
 
     public function contact()
@@ -123,7 +224,7 @@ class SiteController extends Controller
     public function blogs()
     {
         if (activeTemplateName() == 'invester') {
-            abort(404);
+            return redirect()->route('markets');
         }
         $blogs     = Frontend::where('data_keys', 'blog.element')->where('template_name', activeTemplateName())->orderBy('id', 'desc')->paginate(getPaginate(9));
         $pageTitle = 'Blogs';

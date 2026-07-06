@@ -28,6 +28,16 @@ function slug($string)
     return Illuminate\Support\Str::slug($string);
 }
 
+function crownmaireLandingRoutes(): array
+{
+    return ['home', 'about', 'contact', 'platform', 'markets', 'strategies', 'careers', 'careers.apply', 'policy.pages'];
+}
+
+function isCrownmaireLanding(): bool
+{
+    return request()->routeIs(crownmaireLandingRoutes());
+}
+
 function verificationCode($length)
 {
     if ($length == 0) {

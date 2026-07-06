@@ -98,6 +98,24 @@ Route::middleware('admin')->group(function () {
         Route::post('delete/{id}', 'delete')->name('delete');
     });
 
+    // Job Opportunities
+    Route::controller('JobPostController')->prefix('job-post')->name('job.post.')->group(function () {
+        Route::get('/', 'index')->name('index');
+        Route::post('store', 'store')->name('store');
+        Route::post('update/{id}', 'update')->name('update');
+        Route::post('status/{id}', 'status')->name('status');
+        Route::post('delete/{id}', 'delete')->name('delete');
+    });
+
+    // Job Applications
+    Route::controller('JobApplicationController')->prefix('job-application')->name('job.application.')->group(function () {
+        Route::get('/', 'index')->name('index');
+        Route::get('detail/{id}', 'detail')->name('detail');
+        Route::post('update/{id}', 'update')->name('update');
+        Route::get('resume/{id}', 'resume')->name('resume');
+        Route::post('delete/{id}', 'delete')->name('delete');
+    });
+
     // Leaderboard
     Route::controller('LeaderboardController')->prefix('leaderboard')->name('leaderboard.')->group(function () {
         Route::get('/', 'index')->name('index');

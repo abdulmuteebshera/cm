@@ -10,8 +10,10 @@
             <ul class="cm-header__menu" id="cmNavMenu">
                 <li><a href="{{ route('home') }}" class="{{ request()->routeIs('home') ? 'is-active' : '' }}">@lang('Home')</a></li>
                 <li><a href="{{ route('about') }}" class="{{ request()->routeIs('about') ? 'is-active' : '' }}">@lang('About')</a></li>
-                <li><a href="{{ route('home') }}#dashboard">@lang('Platform')</a></li>
-                <li><a href="{{ route('home') }}#faqs">@lang('FAQs')</a></li>
+                <li><a href="{{ route('strategies') }}" class="{{ request()->routeIs('strategies') ? 'is-active' : '' }}">@lang('Strategies')</a></li>
+                <li><a href="{{ route('markets') }}" class="{{ request()->routeIs('markets') ? 'is-active' : '' }}">@lang('Markets')</a></li>
+                <li><a href="{{ route('platform') }}" class="{{ request()->routeIs('platform') ? 'is-active' : '' }}">@lang('Platform')</a></li>
+                <li><a href="{{ route('careers') }}" class="{{ request()->routeIs('careers') ? 'is-active' : '' }}">@lang('Careers')</a></li>
                 <li><a href="{{ route('contact') }}" class="{{ request()->routeIs('contact') ? 'is-active' : '' }}">@lang('Contact')</a></li>
                 @if (auth()->check())
                     <li class="cm-header__menu-portal">

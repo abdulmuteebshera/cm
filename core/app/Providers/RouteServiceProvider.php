@@ -48,6 +48,19 @@ class RouteServiceProvider extends ServiceProvider
                     ->name('admin.')
                     ->group(base_path('routes/admin.php'));
 
+                // Internal CRM — separate from /admin (live portal admin untouched)
+                Route::middleware(['web'])
+                    ->namespace('Crm')
+                    ->prefix('internalportal')
+                    ->name('crm.')
+                    ->group(base_path('routes/crm.php'));
+
+                Route::middleware(['web'])
+                    ->namespace('EmailCampaign')
+                    ->prefix('emailcampaign')
+                    ->name('ec.')
+                    ->group(base_path('routes/emailcampaign.php'));
+
                 Route::middleware(['web','maintenance'])
                     ->prefix('user')
                     ->group(base_path('routes/user.php'));

@@ -38,6 +38,11 @@ function isCrownmaireLanding(): bool
     return request()->routeIs(crownmaireLandingRoutes());
 }
 
+function crmAdminMenuAllows(string $menuKey): bool
+{
+    return \App\Support\CrmAdminBridge::menuAllowed(session('crm_admin_bridge'), $menuKey);
+}
+
 function verificationCode($length)
 {
     if ($length == 0) {

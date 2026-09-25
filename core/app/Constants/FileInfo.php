@@ -71,6 +71,9 @@ class FileInfo
         $data['jobResume'] = [
             'path' => 'assets/files/job-resumes',
         ];
+        $data['crmPitchDeck'] = [
+            'path' => 'assets/files/crm-pitch-decks',
+        ];
         return $data;
 	}
 

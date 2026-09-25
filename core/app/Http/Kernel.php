@@ -68,6 +68,16 @@ class Kernel extends HttpKernel
         'admin' => \App\Http\Middleware\RedirectIfNotAdmin::class,
         'admin.guest' => \App\Http\Middleware\RedirectIfAdmin::class,
 
+        'crm' => \App\Http\Middleware\RedirectIfNotCrmStaff::class,
+        'crm.guest' => \App\Http\Middleware\RedirectIfCrmStaff::class,
+        'crm.permission' => \App\Http\Middleware\CrmPermission::class,
+        'crm.admin.scope' => \App\Http\Middleware\EnforceCrmAdminScope::class,
+
+        'ec.admin' => \App\Http\Middleware\RedirectIfNotEcAdmin::class,
+        'ec.admin.guest' => \App\Http\Middleware\RedirectIfEcAdmin::class,
+        'ec.user' => \App\Http\Middleware\RedirectIfNotEcUser::class,
+        'ec.user.guest' => \App\Http\Middleware\RedirectIfEcUser::class,
+
         'registration.status' => \App\Http\Middleware\AllowRegistration::class,
         'check.status' => \App\Http\Middleware\CheckStatus::class,
         'demo' => \App\Http\Middleware\Demo::class,

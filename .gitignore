@@ -25,5 +25,7 @@ Thumbs.db
 # User uploads (keep on server, not in git)
 assets/files/job-resumes/*
 !assets/files/job-resumes/.gitkeep
+assets/files/crm-pitch-decks/*
+!assets/files/crm-pitch-decks/.gitkeep
 assets/verify/**
 !assets/verify/.gitkeep

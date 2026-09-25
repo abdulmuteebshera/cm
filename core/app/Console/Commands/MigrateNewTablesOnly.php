@@ -22,6 +22,11 @@ class MigrateNewTablesOnly extends Command
         'database/migrations/2026_06_23_000001_create_portfolio_allocations_table.php',
         'database/migrations/2026_07_02_000001_create_job_posts_table.php',
         'database/migrations/2026_07_02_000002_create_job_applications_table.php',
+        'database/migrations/2026_08_04_000001_create_crm_tables.php',
+        'database/migrations/2026_08_04_000002_crm_manager_perms_and_officer_program.php',
+        'database/migrations/2026_09_26_000001_create_email_campaign_tables.php',
+        'database/migrations/2026_09_26_000002_ec_admin_owns_groups_campaigns.php',
+        'database/migrations/2026_09_26_000003_ec_groups_visibility.php',
     ];
 
     public function handle(): int

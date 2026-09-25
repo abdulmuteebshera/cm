@@ -23,7 +23,7 @@ Route::namespace('Auth')->group(function () {
     });
 });
 
-Route::middleware('admin')->group(function () {
+Route::middleware(['admin', 'crm.admin.scope'])->group(function () {
     Route::controller('AdminController')->group(function () {
         Route::get('dashboard', 'dashboard')->name('dashboard');
         Route::get('profile', 'profile')->name('profile');

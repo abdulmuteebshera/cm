@@ -16,6 +16,7 @@ class Kernel extends ConsoleKernel
     protected function schedule(Schedule $schedule)
     {
         $schedule->command('strategy:sync-period-payouts')->dailyAt('00:05');
+        $schedule->command('ec:process-campaigns')->everyTenSeconds();
     }
 
     /**

@@ -29,24 +29,45 @@ cd core
 php artisan migrate:new-tables-only
 ```
 
-This adds tables such as `job_posts` and `job_applications` when missing. It does **not** modify `deposits`, `withdrawals`, `support_tickets`, `users`, or other live data tables.
+This adds tables such as `job_posts`, `job_applications`, and CRM tables (`crm_staff`, `crm_roles`, etc.) when missing. It does **not** modify `deposits`, `withdrawals`, `support_tickets`, `users`, or other live data tables.
 
 ## 4. Writable upload folders
 
 ```bash
 chmod -R 775 assets/files/job-resumes
+chmod -R 775 assets/files/crm-pitch-decks
 ```
 
-## 5. Clear caches
+## 5. Seed CRM super admin (first CRM deploy only)
+
+Creates CRM roles/permissions and super admin `info@crownmaire.com` (does not touch portal users/admins):
+
+```bash
+cd core
+php artisan db:seed --class=CrmSystemSeeder --force
+```
+
+## 6. Clear caches
 
 ```bash
 cd core
 php artisan optimize:clear
 ```
 
-## 6. Hard-refresh the site
+## 7. Hard-refresh the site
 
 Browser: Ctrl+F5. Bump CSS `?v=` in views if styles look stale.
+
+### CRM portal URLs
+
+| Portal | URL |
+|--------|-----|
+| Super Admin CRM | `/internalportal/crm` |
+| Manager | `/internalportal/manager` |
+| Investment Officer | `/internalportal/agent` |
+| Trader | `/internalportal/trader` |
+| Finance | `/internalportal/finance` |
+| Live investor admin (unchanged) | `/admin` |
 
 ---
 

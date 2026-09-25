@@ -5,6 +5,19 @@
             <a href="{{ route('admin.dashboard') }}" class="sidebar__main-logo"><img src="{{ getImage(getFilePath('logoIcon') . '/logo.png') }}" alt="@lang('image')"></a>
         </div>
 
+        @if(session('crm_admin_bridge'))
+            <div class="p-3">
+                <div class="alert alert-success mb-0 py-2 px-3" style="font-size:12px;">
+                    <strong>Entered from CRM</strong><br>
+                    {{ session('crm_admin_bridge.staff_name') }}
+                    — no separate admin login
+                    <div class="mt-2">
+                        <a href="{{ route(auth('crm')->check() ? auth('crm')->user()->homeRoute() : 'crm.dashboard') }}" class="btn btn-sm btn--primary">Back to CRM</a>
+                    </div>
+                </div>
+            </div>
+        @endif
+
         <div class="sidebar__menu-wrapper" id="sidebar__menuWrapper">
             <ul class="sidebar__menu">
                 <li class="sidebar-menu-item {{ menuActive('admin.dashboard') }}">

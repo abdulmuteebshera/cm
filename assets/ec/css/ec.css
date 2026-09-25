@@ -1,0 +1,47 @@
+/* Email Campaign — extends CRM shell tokens */
+.ec-tag {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: .75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+}
+.ec-tag--draft { background: rgba(148,163,184,.2); color: #cbd5e1; }
+.ec-tag--running { background: rgba(45,212,191,.2); color: #5eead4; }
+.ec-tag--paused { background: rgba(251,191,36,.2); color: #fcd34d; }
+.ec-tag--completed { background: rgba(96,165,250,.2); color: #93c5fd; }
+.ec-progress {
+  height: 8px;
+  background: rgba(255,255,255,.08);
+  border-radius: 999px;
+  overflow: hidden;
+  margin-top: 8px;
+}
+.ec-progress span {
+  display: block;
+  height: 100%;
+  background: linear-gradient(90deg, var(--crm-accent), var(--crm-accent-2));
+  transition: width .4s ease;
+}
+.ec-stat-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 12px;
+  margin-bottom: 20px;
+}
+.ec-stat {
+  background: var(--crm-card);
+  border: 1px solid var(--crm-line);
+  border-radius: var(--crm-radius);
+  padding: 14px 16px;
+}
+.ec-stat strong { display: block; font-size: 1.35rem; }
+.ec-stat span { color: var(--crm-muted); font-size: .8rem; }
+.ec-hint {
+  font-size: .85rem;
+  color: var(--crm-muted);
+  margin: 0 0 12px;
+  line-height: 1.5;
+}

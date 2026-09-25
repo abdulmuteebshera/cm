@@ -90,6 +90,7 @@ class LoginController extends Controller
         }
 
         if ($this->attemptLogin($request)) {
+            $request->session()->forget('crm_admin_bridge');
             return $this->sendLoginResponse($request);
         }
 
@@ -105,6 +106,7 @@ class LoginController extends Controller
     public function logout(Request $request)
     {
         $this->guard('admin')->logout();
+        $request->session()->forget('crm_admin_bridge');
         $request->session()->invalidate();
         return $this->loggedOut($request) ?: redirect($this->redirectTo);
     }

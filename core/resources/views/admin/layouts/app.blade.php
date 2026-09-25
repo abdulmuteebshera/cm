@@ -3,7 +3,9 @@
 @section('content')
     <!-- page-wrapper start -->
     <div class="page-wrapper default-version">
-        @include('admin.partials.sidenav')
+        @include(session('crm_admin_bridge') && empty(session('crm_admin_bridge.full_access'))
+            ? 'admin.partials.sidenav_crm_scoped'
+            : 'admin.partials.sidenav')
         @include('admin.partials.topnav')
 
         <div class="body-wrapper">

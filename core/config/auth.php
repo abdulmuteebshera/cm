@@ -50,6 +50,21 @@ return [
             'driver' => 'session',
             'provider' => 'admins',
         ],
+
+        'crm' => [
+            'driver' => 'session',
+            'provider' => 'crm_staff',
+        ],
+
+        'ec_admin' => [
+            'driver' => 'session',
+            'provider' => 'ec_admins',
+        ],
+
+        'ec_user' => [
+            'driver' => 'session',
+            'provider' => 'ec_users',
+        ],
     ],
 
     /*
@@ -78,6 +93,21 @@ return [
         'admins' => [
             'driver' => 'eloquent',
             'model' => App\Models\Admin::class,
+        ],
+
+        'crm_staff' => [
+            'driver' => 'eloquent',
+            'model' => App\Models\Crm\CrmStaff::class,
+        ],
+
+        'ec_admins' => [
+            'driver' => 'eloquent',
+            'model' => App\Models\EmailCampaign\EcAdmin::class,
+        ],
+
+        'ec_users' => [
+            'driver' => 'eloquent',
+            'model' => App\Models\EmailCampaign\EcUser::class,
         ],
 
         // 'users' => [

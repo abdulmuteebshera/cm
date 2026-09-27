@@ -74,7 +74,7 @@ class ProcessEcCampaigns extends Command
 
         $vars = EcTemplateRenderer::varsForRecipient($recipient->name, $recipient->email, $recipient->merge_data);
         $subject = EcTemplateRenderer::render($campaign->subject, $vars);
-        $html    = EcTemplateRenderer::render($campaign->body_html, $vars);
+        $html    = EcTemplateRenderer::renderHtml($campaign->body_html, $vars);
         $text    = $campaign->body_text ? EcTemplateRenderer::render($campaign->body_text, $vars) : null;
 
         try {

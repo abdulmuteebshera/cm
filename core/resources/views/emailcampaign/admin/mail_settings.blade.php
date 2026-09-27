@@ -15,7 +15,7 @@
         <tr><td style="padding:6px 8px;color:#64748b">Encryption</td><td><code>TLS</code></td></tr>
         <tr><td style="padding:6px 8px;color:#64748b">Username</td><td>Your full Gmail address (e.g. you@gmail.com)</td></tr>
         <tr><td style="padding:6px 8px;color:#64748b">Password</td><td>The <strong>App password</strong> (not your normal Gmail password)</td></tr>
-        <tr><td style="padding:6px 8px;color:#64748b">From email</td><td>Same Gmail address (or a Google Workspace alias you’re allowed to send as)</td></tr>
+        <tr><td style="padding:6px 8px;color:#64748b">From email</td><td>Same as SMTP username (or set Reply-To to another address). Mismatch causes “data not accepted” to external webmail.</td></tr>
     </table>
     <p class="ec-hint" style="margin-top:12px">Bulk marketing from Gmail has low daily limits (~500/day for personal Gmail). For large campaigns use Google Workspace or a transactional provider (SendGrid, Mailgun, Amazon SES).</p>
 </section>

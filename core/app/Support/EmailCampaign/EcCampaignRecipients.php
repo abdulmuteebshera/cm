@@ -87,14 +87,4 @@ class EcCampaignRecipients
         return static::addMany($campaign, $rows);
     }
 
-    public static function releaseStaleSendingLocks(): void
-    {
-        EcCampaignRecipient::query()
-            ->where('status', 'sending')
-            ->where('updated_at', '<', now()->subMinutes(3))
-            ->update([
-                'status'         => 'pending',
-                'error_message'  => null,
-            ]);
-    }
 }

@@ -8,6 +8,8 @@ use App\Models\Frontend;
 use App\Models\SupportTicket;
 use App\Models\User;
 use App\Models\Withdrawal;
+use App\Support\Seo\SeoCatalog;
+use App\Support\Seo\SeoSite;
 use Illuminate\Pagination\Paginator;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\ServiceProvider;
@@ -67,9 +69,15 @@ class AppServiceProvider extends ServiceProvider
         });
 
         view()->composer('partials.seo', function ($view) {
+            try {
+                SeoSite::ensureDefaultSeo();
+            } catch (\Throwable $e) {
+                //
+            }
             $seo = Frontend::where('data_keys', 'seo.data')->first();
             $view->with([
-                'seo' => $seo ? $seo->data_values : $seo,
+                'seo'     => $seo ? $seo->data_values : $seo,
+                'seoPage' => SeoCatalog::resolve($view->getData()),
             ]);
         });
 

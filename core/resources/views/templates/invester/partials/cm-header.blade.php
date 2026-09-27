@@ -1,7 +1,7 @@
 <header class="cm-header" id="cmHeader">
     <div class="cm-header__bar">
         <a href="{{ route('home') }}" class="cm-header__brand">
-            <img src="{{ asset(getImage(getFilePath('logoIcon') . '/logo.png')) }}" alt="{{ $general->site_name }}">
+            <img src="{{ asset(getImage(getFilePath('logoIcon') . '/logo.png')) }}" alt="Crownmaire Capital — Quantitative Asset Management">
         </a>
         <nav class="cm-header__nav" aria-label="Main">
             <button type="button" class="cm-header__toggle" id="cmNavToggle" aria-expanded="false" aria-label="Menu">

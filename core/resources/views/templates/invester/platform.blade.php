@@ -9,6 +9,7 @@
             <p class="cm-page-hero__lead">@lang('Every module below is part of the proprietary Crownmaire member portal — a quant-powered command center for capital tracking, performance analytics, treasury operations, and secure investor communication.')</p>
         </div>
     </section>
+    @include($activeTemplate . 'partials.cm-breadcrumb')
 
     <section class="cm-section cm-section--platform">
         <div class="cm-container cm-container--platform">

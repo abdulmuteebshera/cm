@@ -8,9 +8,9 @@
         <div class="cm-footer__grid">
             <div class="cm-footer__brand">
                 <a href="{{ route('home') }}">
-                    <img src="{{ asset(getImage(getFilePath('logoIcon') . '/logo_2.png')) }}" alt="{{ $general->site_name }}">
+                    <img src="{{ asset(getImage(getFilePath('logoIcon') . '/logo_2.png')) }}" alt="Crownmaire Capital — Quantitative Asset Management">
                 </a>
-                <p>@lang('Experience a new era of fintech-powered investment management where data, technology, and expertise meet to help you achieve your goals.')</p>
+                <p>@lang('Crownmaire Capital is a quantitative asset management firm serving qualified investors from New York and Dubai. We manage invitation-only multi-asset programs with institutional reporting and disciplined risk controls.')</p>
             </div>
             <div>
                 <h5 class="cm-footer__title">@lang('Company')</h5>
@@ -40,6 +40,8 @@
             <div>
                 <h5 class="cm-footer__title">@lang('Portal')</h5>
                 <ul class="cm-footer__links">
+                    <li>100 Wall Street Ct, New York, NY 10005</li>
+                    <li>2402 Al-Manara Tower, Business Bay, Dubai</li>
                     <li><a href="tel:+19175006476">+1 917 500 6476</a></li>
                     <li><a href="mailto:Info@crownmaire.com">Info@crownmaire.com</a></li>
                     <li><a href="{{ route('user.login') }}">@lang('Member Login')</a></li>

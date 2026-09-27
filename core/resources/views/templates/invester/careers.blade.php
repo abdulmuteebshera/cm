@@ -9,6 +9,7 @@
             <p class="cm-page-hero__lead">@lang('Join Crownmaire Capital and work at the intersection of data science, algorithmic trading, and institutional portfolio management.')</p>
         </div>
     </section>
+    @include($activeTemplate . 'partials.cm-breadcrumb')
 
     <section class="cm-section cm-section--careers">
         <div class="cm-container">

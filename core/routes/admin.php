@@ -399,6 +399,18 @@ Route::middleware(['admin', 'crm.admin.scope'])->group(function () {
     // SEO
     Route::get('seo', 'FrontendController@seoEdit')->name('seo');
 
+    Route::controller('SeoAnalyticsController')->prefix('seo-analytics')->name('seo.analytics.')->group(function () {
+        Route::get('/', 'index')->name('index');
+        Route::get('visitors', 'visitors')->name('visitors');
+        Route::get('visitors/{id}', 'session')->name('session');
+        Route::get('pages', 'pages')->name('pages');
+        Route::get('locations', 'locations')->name('locations');
+        Route::get('devices', 'devices')->name('devices');
+        Route::get('sources', 'sources')->name('sources');
+        Route::get('clicks', 'clicks')->name('clicks');
+        Route::get('results', 'results')->name('results');
+    });
+
     // Frontend
     Route::name('frontend.')->prefix('frontend')->group(function () {
 

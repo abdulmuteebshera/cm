@@ -29,7 +29,9 @@ cd core
 php artisan migrate:new-tables-only
 ```
 
-This adds tables such as `job_posts`, `job_applications`, CRM tables (`crm_*`), and email campaign tables (`ec_*`) when missing. It does **not** modify `deposits`, `withdrawals`, `support_tickets`, `users`, or other live data tables.
+This adds tables such as `job_posts`, `job_applications`, CRM tables (`crm_*`), email campaign tables (`ec_*`), and SEO analytics tables (`seo_visitor_sessions`, `seo_page_views`, `seo_events`) when missing. It does **not** modify `deposits`, `withdrawals`, `support_tickets`, `users`, or other live data tables.
+
+After deploy, confirm `/sitemap.xml` and `/robots.txt` load, then submit the sitemap in Google Search Console for `https://crownmairecapital.com`. Admin reports are at `/admin/seo-analytics`.
 
 ### Email campaign only (after pull)
 

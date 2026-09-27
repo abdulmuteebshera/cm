@@ -1,11 +1,10 @@
 <!-- meta tags and other links -->
 <!DOCTYPE html>
-<html lang="{{ config('app.locale') }}">
+<html lang="en" itemscope itemtype="https://schema.org/WebPage">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title> {{ $general->siteName(__($pageTitle)) }}</title>
     @include('partials.seo')
 
     @php $isLanding = isCrownmaireLanding(); @endphp
@@ -127,6 +126,7 @@
         }, 2000);
     </script>
     @endif
+    @include('partials.seo_tracker')
 </body>
 
 </html>

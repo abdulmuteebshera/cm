@@ -537,6 +537,13 @@
                     </a>
                 </li>
 
+                <li class="sidebar-menu-item {{ menuActive('admin.seo.analytics*') }}">
+                    <a href="{{ route('admin.seo.analytics.index') }}" class="nav-link">
+                        <i class="menu-icon las la-chart-line"></i>
+                        <span class="menu-title">@lang('SEO Analytics')</span>
+                    </a>
+                </li>
+
                 <li class="sidebar-menu-item {{ menuActive('admin.seo') }}">
                     <a href="{{ route('admin.seo') }}" class="nav-link">
                         <i class="menu-icon las la-globe"></i>

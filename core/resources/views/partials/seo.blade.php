@@ -1,41 +1,63 @@
 @php
-    if(isset($seoContents) && count($seoContents)){
-        $seoContents        = json_decode(json_encode($seoContents, true));
-        $socialImageSize    = explode('x', $seoContents->image_size);
-    }elseif($seo){
-        $seoContents        = $seo;
-        $socialImageSize    = explode('x', getFileSize('seo'));
-        $seoContents->image = getImage(getFilePath('seo').'/'. $seo->image);
-    }else{
-        $seoContents = null;
+    $catalog = $seoPage ?? \App\Support\Seo\SeoCatalog::resolve(get_defined_vars());
+    $socialImage = $catalog->image ?? \App\Support\Seo\SeoSite::logoUrl();
+    $canonical = $catalog->canonical ?? \App\Support\Seo\SeoSite::currentCanonical();
+    $jsonLd = $catalog->indexable ? \App\Support\Seo\SeoCatalog::jsonLd($catalog) : null;
+
+    $fallbackSeo = $seo ?? null;
+    if (isset($seoContents) && (is_array($seoContents) || is_object($seoContents))) {
+        $legacy = json_decode(json_encode($seoContents));
+        if (!empty($legacy->image)) {
+            $socialImage = $legacy->image;
+        }
     }
 @endphp
 
-<meta name="title" Content="{{ $general->sitename(__($pageTitle)) }}">
+<title>{{ $catalog->title }}</title>
+<meta name="title" content="{{ $catalog->title }}">
+<meta name="description" content="{{ $catalog->description }}">
+<meta name="keywords" content="{{ implode(',', (array) $catalog->keywords) }}">
+<meta name="author" content="{{ \App\Support\Seo\SeoSite::BRAND }}">
+<meta name="robots" content="{{ $catalog->robots }}">
+<meta name="googlebot" content="{{ $catalog->robots }}">
+<link rel="canonical" href="{{ $canonical }}">
+<link rel="alternate" hreflang="en" href="{{ $canonical }}">
+<link rel="alternate" hreflang="x-default" href="{{ $canonical }}">
 
-@if($seoContents)
-    <meta name="description" content="{{ $seoContents->meta_description??$seoContents->description }}">
-    <meta name="keywords" content="{{ implode(',',$seoContents->keywords) }}">
-    <link rel="shortcut icon" href="{{ getImage(getFilePath('logoIcon') . '/favicon.png') }}" type="image/x-icon">
+<link rel="shortcut icon" href="{{ getImage(getFilePath('logoIcon') . '/favicon.png') }}" type="image/x-icon">
+<link rel="apple-touch-icon" href="{{ getImage(getFilePath('logoIcon') . '/logo.png') }}">
+<meta name="theme-color" content="#0b1f2a">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="apple-mobile-web-app-title" content="{{ \App\Support\Seo\SeoSite::BRAND }}">
+<meta name="application-name" content="{{ \App\Support\Seo\SeoSite::BRAND }}">
+<meta name="format-detection" content="telephone=yes">
 
-    {{--<!-- Apple Stuff -->--}}
-    <link rel="apple-touch-icon" href="{{ getImage(getFilePath('logoIcon') . '/logo.png') }}">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black">
-    <meta name="apple-mobile-web-app-title" content="{{ $general->sitename($pageTitle) }}">
-    {{--<!-- Google / Search Engine Tags -->--}}
-    <meta itemprop="name" content="{{ $general->sitename($pageTitle) }}">
-    <meta itemprop="description" content="{{ $seoContents->description }}">
-    <meta itemprop="image" content="{{ $seoContents->image }}">
-    {{--<!-- Facebook Meta Tags -->--}}
-    <meta property="og:type" content="website">
-    <meta property="og:title" content="{{ $seoContents->social_title }}">
-    <meta property="og:description" content="{{ $seoContents->social_description }}">
-    <meta property="og:image" content="{{ $seoContents->image }}"/>
-    <meta property="og:image:type" content="{{ @pathinfo($seoContents->image)['extension'] }}"/>
-    <meta property="og:image:width" content="{{ $socialImageSize[0] }}" />
-    <meta property="og:image:height" content="{{ $socialImageSize[1] }}" />
-    <meta property="og:url" content="{{ url()->current() }}">
-    {{--<!-- Twitter Meta Tags -->--}}
-    <meta name="twitter:card" content="summary_large_image">
+<meta name="geo.region" content="US-NY">
+<meta name="geo.placename" content="New York">
+<meta name="geo.position" content="40.7069;-74.0086">
+<meta name="ICBM" content="40.7069, -74.0086">
+
+<meta itemprop="name" content="{{ $catalog->title }}">
+<meta itemprop="description" content="{{ $catalog->description }}">
+<meta itemprop="image" content="{{ $socialImage }}">
+
+<meta property="og:locale" content="en_US">
+<meta property="og:type" content="{{ $catalog->og_type ?? 'website' }}">
+<meta property="og:site_name" content="{{ \App\Support\Seo\SeoSite::BRAND }}">
+<meta property="og:title" content="{{ $catalog->title }}">
+<meta property="og:description" content="{{ $catalog->description }}">
+<meta property="og:url" content="{{ $canonical }}">
+<meta property="og:image" content="{{ $socialImage }}">
+<meta property="og:image:alt" content="{{ $catalog->title }}">
+<meta property="og:image:width" content="{{ $catalog->image_width ?? 1200 }}">
+<meta property="og:image:height" content="{{ $catalog->image_height ?? 630 }}">
+
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="{{ $catalog->title }}">
+<meta name="twitter:description" content="{{ $catalog->description }}">
+<meta name="twitter:image" content="{{ $socialImage }}">
+
+@if($jsonLd && !empty($jsonLd['@graph']))
+<script type="application/ld+json">{!! json_encode($jsonLd, JSON_UNESCAPED_SLASHES|JSON_UNESCAPED_UNICODE) !!}</script>
 @endif

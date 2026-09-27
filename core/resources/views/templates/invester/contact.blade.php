@@ -10,6 +10,7 @@
             <p class="cm-page-hero__lead">@lang('Request a private consultation, invitation, or dashboard preview.')</p>
         </div>
     </section>
+    @include($activeTemplate . 'partials.cm-breadcrumb')
 
     {{-- Contact form --}}
     <section class="cm-section">

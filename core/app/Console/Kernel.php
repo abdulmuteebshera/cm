@@ -18,6 +18,7 @@ class Kernel extends ConsoleKernel
         $schedule->command('strategy:sync-period-payouts')->dailyAt('00:05');
         // Laravel 9 has no everyTenSeconds(); cron runs schedule:run each minute → ~1 send tick/min per campaign.
         $schedule->command('ec:process-campaigns')->everyMinute();
+        $schedule->command('seo:prune')->weeklyOn(1, '03:15');
     }
 
     /**

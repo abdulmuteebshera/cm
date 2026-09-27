@@ -8,6 +8,7 @@
             <h1 class="cm-page-hero__title">{{ __($pageTitle) }}</h1>
         </div>
     </section>
+    @include($activeTemplate . 'partials.cm-breadcrumb')
 
     <section class="cm-section">
         <div class="cm-container">

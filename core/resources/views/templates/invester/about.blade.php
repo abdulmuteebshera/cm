@@ -22,6 +22,7 @@
             </a>
         </div>
     </section>
+    @include($activeTemplate . 'partials.cm-breadcrumb')
 
     {{-- Introduction --}}
     <section class="cm-section">

@@ -5,6 +5,12 @@
 
     RewriteEngine On
 
+    # Canonical host: crownmaire.com and www → https://crownmairecapital.com
+    RewriteCond %{HTTP_HOST} ^(www\.)?crownmaire\.com$ [NC]
+    RewriteRule ^(.*)$ https://crownmairecapital.com/$1 [R=301,L]
+    RewriteCond %{HTTP_HOST} ^www\.crownmairecapital\.com$ [NC]
+    RewriteRule ^(.*)$ https://crownmairecapital.com/$1 [R=301,L]
+
     DirectoryIndex index.php index.html
 
     # Handle Authorization Header

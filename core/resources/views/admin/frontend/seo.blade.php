@@ -1,6 +1,14 @@
 @extends('admin.layouts.app')
 
 @section('panel')
+    <div class="alert border border--primary mb-4" role="alert">
+        <div class="alert__icon bg--primary"><i class="las la-chart-line"></i></div>
+        <p class="alert__message">
+            @lang('Page titles, descriptions, sitemap, and schema are generated automatically for the Crownmaire site.')
+            <a href="{{ route('admin.seo.analytics.index') }}" class="fw-bold">@lang('Open SEO Analytics')</a>
+            @lang('to review visitors, locations, devices, time on page, clicks, and SEO results.')
+        </p>
+    </div>
     <div class="row">
         <div class="col-lg-12 col-md-12 mb-30">
             <div class="card">

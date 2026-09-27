@@ -5,10 +5,11 @@
         <div class="cm-page-hero__grid" aria-hidden="true"></div>
         <div class="cm-container cm-page-hero__inner cm-reveal">
             <span class="cm-badge"><i class="las la-chart-line"></i> @lang('Markets')</span>
-            <h1 class="cm-page-hero__title">@lang('Global market intelligence')</h1>
-            <p class="cm-page-hero__lead">@lang('Live index performance and the latest finance headlines from international markets.')</p>
+            <h1 class="cm-page-hero__title">@lang('Global market intelligence for investors')</h1>
+            <p class="cm-page-hero__lead">@lang('Live index performance and financial headlines used by Crownmaire Capital to inform quantitative asset management across currencies, equities, commodities, and global indices.')</p>
         </div>
     </section>
+    @include($activeTemplate . 'partials.cm-breadcrumb')
 
     @include($activeTemplate . 'partials.market-ticker', ['marketIndices' => $marketIndices, 'hideTickerLink' => true])
 

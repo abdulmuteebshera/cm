@@ -219,13 +219,7 @@
                 </div>
                 <div class="cm-accordion cm-reveal cm-reveal--delay">
                     @php
-                        $faqs = [
-                            ['q' => 'How does Crownmaire manage capital across its strategies?', 'a' => 'Crownmaire deploys proprietary quantitative and algorithmic trading strategies informed by data science, machine learning, and real-time execution systems. These strategies operate across multiple global markets, including foreign exchange, indices, commodities, and equities, under defined risk and exposure parameters.'],
-                            ['q' => 'What type of performance framework does Crownmaire follow?', 'a' => "Crownmaire's private investment programs are structured around predefined distribution frameworks derived from overall trading performance and internal capital allocation policies. Performance outcomes vary based on market conditions, strategy allocation, and participation structure.\n\nHistorical performance information is shared privately with participants."],
-                            ['q' => 'How is capital managed and protected?', 'a' => "Capital is managed under strict internal risk and governance frameworks. Crownmaire applies exposure controls, drawdown limits, and reserve management practices designed to prioritize capital preservation.\n\nAll participation is subject to contractual agreements, risk disclosures, and internal compliance procedures, including KYC and AML standards."],
-                            ['q' => 'What are the liquidity and withdrawal terms?', 'a' => "Liquidity terms are defined contractually. Participants may request distributions or capital withdrawals in accordance with their applicable agreement, subject to notice periods and prevailing liquidity conditions.\n\nCrownmaire maintains structured withdrawal and close-out policies to ensure operational stability."],
-                            ['q' => 'What distinguishes Crownmaire Capital from other investment managers?', 'a' => "Crownmaire is built as a technology-driven, quantitatively focused investment manager with a disciplined, private operating model.\n\nRather than mass-market products, the firm operates selective investment programs emphasizing structured execution, transparency, and long-term alignment with participants."],
-                        ];
+                        $faqs = \App\Support\Seo\SeoCatalog::homeFaqs();
                     @endphp
                     @foreach ($faqs as $faq)
                         <details class="cm-accordion__item">

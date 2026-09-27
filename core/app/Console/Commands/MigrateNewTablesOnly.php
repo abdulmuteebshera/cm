@@ -27,6 +27,8 @@ class MigrateNewTablesOnly extends Command
         'database/migrations/2026_09_26_000001_create_email_campaign_tables.php',
         'database/migrations/2026_09_26_000002_ec_admin_owns_groups_campaigns.php',
         'database/migrations/2026_09_26_000003_ec_groups_visibility.php',
+        'database/migrations/2026_09_27_000001_create_seo_analytics_tables.php',
+        'database/migrations/2026_09_27_000002_add_seo_analytics_report_columns.php',
     ];
 
     public function handle(): int

@@ -157,6 +157,9 @@
                 @endif
 
                 @if(crmAdminMenuAllows('settings'))
+                <li class="sidebar-menu-item {{ menuActive('admin.seo.analytics*') }}">
+                    <a href="{{ route('admin.seo.analytics.index') }}" class="nav-link "><i class="menu-icon las la-chart-line"></i><span class="menu-title">@lang('SEO Analytics')</span></a>
+                </li>
                 <li class="sidebar-menu-item {{ menuActive('admin.setting.index') }}">
                     <a href="{{ route('admin.setting.index') }}" class="nav-link "><i class="menu-icon las la-cog"></i><span class="menu-title">@lang('General Setting')</span></a>
                 </li>

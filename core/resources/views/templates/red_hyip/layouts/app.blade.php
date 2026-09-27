@@ -117,6 +117,7 @@
         })(jQuery);
     </script>
 
+    @include('partials.seo_tracker')
 </body>
 
 </html>

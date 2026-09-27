@@ -26,6 +26,10 @@ Route::get('app/deposit/confirm/{hash}', 'Gateway\PaymentController@appDepositCo
 // Public, shareable certificate
 Route::get('certificate/{uid}', 'CertificateController@show')->name('certificate.show');
 
+Route::get('robots.txt', 'SitemapController@robots')->name('robots');
+Route::get('sitemap.xml', 'SitemapController@index')->name('sitemap');
+Route::post('seo/beacon', 'SeoBeaconController@store')->name('seo.beacon');
+
 Route::controller('SiteController')->group(function () {
 
     Route::post('/add/device/token', 'getDeviceToken')->name('add.device.token');

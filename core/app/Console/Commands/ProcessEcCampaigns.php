@@ -5,6 +5,7 @@ namespace App\Console\Commands;
 use App\Models\EmailCampaign\EcActivityLog;
 use App\Models\EmailCampaign\EcCampaign;
 use App\Models\EmailCampaign\EcCampaignRecipient;
+use App\Support\EmailCampaign\EcCampaignRecipients;
 use App\Support\EmailCampaign\EcMailSender;
 use App\Support\EmailCampaign\EcTemplateRenderer;
 use Illuminate\Console\Command;
@@ -18,6 +19,8 @@ class ProcessEcCampaigns extends Command
 
     public function handle(EcMailSender $sender): int
     {
+        EcCampaignRecipients::releaseStaleSendingLocks();
+
         $campaigns = EcCampaign::query()
             ->where('status', 'running')
             ->where(function ($q): void {
@@ -36,14 +39,14 @@ class ProcessEcCampaigns extends Command
 
     protected function processCampaign(EcCampaign $campaign, EcMailSender $sender): void
     {
-        DB::transaction(function () use ($campaign, $sender): void {
+        $claim = DB::transaction(function () use ($campaign) {
             $locked = EcCampaign::query()->whereKey($campaign->id)->lockForUpdate()->first();
             if (!$locked || $locked->status !== 'running') {
-                return;
+                return null;
             }
 
             if ($locked->next_send_at && $locked->next_send_at->isFuture()) {
-                return;
+                return null;
             }
 
             /** @var EcCampaignRecipient|null $recipient */
@@ -59,6 +62,7 @@ class ProcessEcCampaigns extends Command
                 $locked->completed_at = now();
                 $locked->next_send_at = null;
                 $locked->save();
+                $locked->syncTotals();
 
                 EcActivityLog::record(
                     'system',
@@ -67,52 +71,65 @@ class ProcessEcCampaigns extends Command
                     'Campaign completed: ' . $locked->name,
                     'campaign',
                     $locked->id,
-                    ['ec_user_id' => $locked->ec_user_id]
+                    ['ec_user_id' => $locked->ec_user_id, 'ec_admin_id' => $locked->ec_admin_id]
                 );
 
-                return;
+                return null;
             }
 
-            $vars = EcTemplateRenderer::varsForRecipient($recipient->name, $recipient->email, $recipient->merge_data);
-            $subject = EcTemplateRenderer::render($locked->subject, $vars);
-            $html    = EcTemplateRenderer::render($locked->body_html, $vars);
-            $text    = $locked->body_text ? EcTemplateRenderer::render($locked->body_text, $vars) : null;
-
-            try {
-                $sender->send($recipient->email, $recipient->name, $subject, $html, $text);
-                $recipient->status = 'sent';
-                $recipient->sent_at = now();
-                $recipient->error_message = null;
-                $recipient->save();
-
-                $locked->sent_count = EcCampaignRecipient::query()
-                    ->where('ec_campaign_id', $locked->id)
-                    ->where('status', 'sent')
-                    ->count();
-            } catch (\Throwable $e) {
-                $recipient->status = 'failed';
-                $recipient->error_message = $e->getMessage();
-                $recipient->save();
-
-                $locked->failed_count = EcCampaignRecipient::query()
-                    ->where('ec_campaign_id', $locked->id)
-                    ->where('status', 'failed')
-                    ->count();
-
-                EcActivityLog::record(
-                    'system',
-                    null,
-                    'campaign.send_failed',
-                    'Failed to send to ' . $recipient->email,
-                    'campaign',
-                    $locked->id,
-                    ['error' => $e->getMessage(), 'ec_user_id' => $locked->ec_user_id]
-                );
-            }
+            $recipient->status = 'sending';
+            $recipient->save();
 
             $delay = max(5, (int) ($locked->send_delay_seconds ?: 10));
             $locked->next_send_at = now()->addSeconds($delay);
             $locked->save();
+
+            return [
+                'campaign'  => $locked->fresh(),
+                'recipient' => $recipient->fresh(),
+            ];
         });
+
+        if (!$claim) {
+            return;
+        }
+
+        /** @var EcCampaign $locked */
+        $locked = $claim['campaign'];
+        /** @var EcCampaignRecipient $recipient */
+        $recipient = $claim['recipient'];
+
+        $vars = EcTemplateRenderer::varsForRecipient($recipient->name, $recipient->email, $recipient->merge_data);
+        $subject = EcTemplateRenderer::render($locked->subject, $vars);
+        $html    = EcTemplateRenderer::render($locked->body_html, $vars);
+        $text    = $locked->body_text ? EcTemplateRenderer::render($locked->body_text, $vars) : null;
+
+        try {
+            $sender->send($recipient->email, $recipient->name, $subject, $html, $text);
+            $recipient->status = 'sent';
+            $recipient->sent_at = now();
+            $recipient->error_message = null;
+            $recipient->save();
+        } catch (\Throwable $e) {
+            $recipient->status = 'failed';
+            $recipient->error_message = $e->getMessage();
+            $recipient->save();
+
+            EcActivityLog::record(
+                'system',
+                null,
+                'campaign.send_failed',
+                'Failed to send to ' . $recipient->email,
+                'campaign',
+                $locked->id,
+                [
+                    'error'       => $e->getMessage(),
+                    'ec_user_id'  => $locked->ec_user_id,
+                    'ec_admin_id' => $locked->ec_admin_id,
+                ]
+            );
+        }
+
+        $locked->syncTotals();
     }
 }

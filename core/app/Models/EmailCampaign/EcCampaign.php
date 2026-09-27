@@ -85,8 +85,13 @@ class EcCampaign extends Model
     {
         $this->total_recipients = $this->recipients()->count();
         $this->sent_count = $this->recipients()->where('status', 'sent')->count();
-        $this->failed_count = $this->recipients()->whereIn('status', ['failed', 'skipped'])->count();
+        $this->failed_count = $this->recipients()->where('status', 'failed')->count();
         $this->save();
+    }
+
+    public function duplicateCount(): int
+    {
+        return $this->recipients()->where('status', 'duplicate')->count();
     }
 
     public function latestSendFailure(): ?EcCampaignRecipient

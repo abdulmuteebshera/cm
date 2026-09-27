@@ -7,8 +7,8 @@ use App\Models\EmailCampaign\EcActivityLog;
 use App\Models\EmailCampaign\EcCampaign;
 use App\Models\EmailCampaign\EcCampaignRecipient;
 use App\Models\EmailCampaign\EcGroup;
-use App\Models\EmailCampaign\EcGroupMember;
 use App\Models\EmailCampaign\EcTemplate;
+use App\Support\EmailCampaign\EcCampaignRecipients;
 use App\Support\EmailCampaign\EcGroupAccess;
 use App\Support\EmailCampaign\EcRecipientImport;
 use Illuminate\Http\Request;
@@ -77,7 +77,7 @@ class CampaignController extends Controller
         ]);
 
         if ($campaign->ec_group_id) {
-            $this->syncRecipientsFromGroup($campaign);
+            EcCampaignRecipients::syncFromGroup($campaign);
         }
 
         EcActivityLog::record('user', $user->id, 'campaign.created', 'Created campaign: ' . $campaign->name, 'campaign', $campaign->id);
@@ -159,12 +159,12 @@ class CampaignController extends Controller
             'name'  => 'nullable|string|max:120',
         ]);
 
-        EcCampaignRecipient::query()->firstOrCreate(
-            ['ec_campaign_id' => $campaign->id, 'email' => strtolower($data['email'])],
-            ['name' => $data['name'] ?? null, 'status' => 'pending']
-        );
-
+        $result = EcCampaignRecipients::addOne($campaign, $data['email'], $data['name'] ?? null);
         $campaign->syncTotals();
+
+        if ($result === 'duplicate') {
+            return back()->withNotify([['error', 'Duplicate email — already in this campaign. Skipped.']]);
+        }
 
         return back()->withNotify([['success', 'Recipient added.']]);
     }
@@ -184,20 +184,21 @@ class CampaignController extends Controller
             return back()->withNotify([['error', $e->getMessage()]]);
         }
 
-        $added = 0;
-        foreach ($rows as $row) {
-            EcCampaignRecipient::query()->firstOrCreate(
-                ['ec_campaign_id' => $campaign->id, 'email' => $row['email']],
-                ['name' => $row['name'], 'merge_data' => $row['merge_data'], 'status' => 'pending']
-            );
-            $added++;
-        }
+        $stats = EcCampaignRecipients::addMany($campaign, $rows);
 
-        $campaign->syncTotals();
+        EcActivityLog::record(
+            'user',
+            $user->id,
+            'campaign.import',
+            "Imported {$stats['added']} recipients ({$stats['duplicates']} duplicates skipped) to {$campaign->name}",
+            'campaign',
+            $campaign->id
+        );
 
-        EcActivityLog::record('user', $user->id, 'campaign.import', "Imported {$added} recipients to {$campaign->name}", 'campaign', $campaign->id);
-
-        return back()->withNotify([['success', "Imported {$added} rows."]]);
+        return back()->withNotify([[
+            'success',
+            "Added {$stats['added']} recipients. {$stats['duplicates']} duplicate(s) in this campaign were skipped.",
+        ]]);
     }
 
     public function pullFromGroup(int $id)
@@ -209,9 +210,12 @@ class CampaignController extends Controller
             return back()->withNotify([['error', 'No group linked to this campaign.']]);
         }
 
-        $this->syncRecipientsFromGroup($campaign);
+        $stats = EcCampaignRecipients::syncFromGroup($campaign);
 
-        return back()->withNotify([['success', 'Recipients synced from linked group.']]);
+        return back()->withNotify([[
+            'success',
+            "Synced from group: {$stats['added']} added, {$stats['duplicates']} duplicate(s) skipped.",
+        ]]);
     }
 
     public function start(int $id)
@@ -323,22 +327,6 @@ class CampaignController extends Controller
         }
 
         return $campaign;
-    }
-
-    protected function syncRecipientsFromGroup(EcCampaign $campaign): void
-    {
-        $members = EcGroupMember::query()->where('ec_group_id', $campaign->ec_group_id)->get();
-        foreach ($members as $member) {
-            EcCampaignRecipient::query()->firstOrCreate(
-                ['ec_campaign_id' => $campaign->id, 'email' => $member->email],
-                [
-                    'name'        => $member->name,
-                    'merge_data'  => $member->merge_data,
-                    'status'      => 'pending',
-                ]
-            );
-        }
-        $campaign->syncTotals();
     }
 
     protected function formatDuration(int $seconds): string

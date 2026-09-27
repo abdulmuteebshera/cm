@@ -268,7 +268,7 @@ Route::middleware(['admin', 'crm.admin.scope'])->group(function () {
         Route::get('invest-interest-chart', 'investInterestChart')->name('interest.chart');
     });
 
-    // Admin Support
+    // Admin Support — client tickets only
     Route::controller('SupportTicketController')->prefix('ticket')->name('ticket.')->group(function () {
         Route::get('/', 'tickets')->name('index');
         Route::get('pending', 'pendingTicket')->name('pending');
@@ -279,6 +279,12 @@ Route::middleware(['admin', 'crm.admin.scope'])->group(function () {
         Route::post('close/{id}', 'closeTicket')->name('close');
         Route::get('download/{ticket}', 'ticketDownload')->name('download');
         Route::post('delete/{id}', 'ticketDelete')->name('delete');
+    });
+
+    // Public contact form submissions (not client support tickets)
+    Route::controller('SupportTicketController')->prefix('contact-submissions')->name('contact.')->group(function () {
+        Route::get('/', 'contactSubmissions')->name('index');
+        Route::get('pending', 'pendingContactSubmissions')->name('pending');
     });
 
     // Language Manager

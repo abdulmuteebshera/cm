@@ -7,16 +7,21 @@
             <div class="card">
                 <div class="card-body ">
 
+                    @php $isContact = $ticket->isContactSubmission(); @endphp
                     <h6 class="card-title  mb-4">
                         <div class="row">
                             <div class="col-sm-8 col-md-6">
                                 @php echo $ticket->statusBadge; @endphp
-                                [@lang('Ticket#'){{ $ticket->ticket }}] {{ $ticket->subject }}
+                                @if($isContact)
+                                    [@lang('Contact')] {{ $ticket->subject }}
+                                @else
+                                    [@lang('Ticket#'){{ $ticket->ticket }}] {{ $ticket->subject }}
+                                @endif
                             </div>
                             <div class="col-sm-4  col-md-6 text-sm-end mt-sm-0 mt-3">
                                 @if($ticket->status != 3)
                                 <button class="btn btn--danger btn-sm" type="button" data-bs-toggle="modal" data-bs-target="#DelModal">
-                                    <i class="fa fa-lg fa-times-circle"></i> @lang('Close Ticket')
+                                    <i class="fa fa-lg fa-times-circle"></i> {{ $isContact ? __('Close Submission') : __('Close Ticket') }}
                                 </button>
                                 @endif
                             </div>
@@ -73,7 +78,9 @@
 
                                 <div class="col-md-3 border-end text-md-end text-start">
                                     <h5 class="my-3">{{ $ticket->name }}</h5>
-                                    @if($ticket->user_id != null)
+                                    @if($isContact)
+                                        <p class="mb-1"><a href="mailto:{{ $ticket->email }}">{{ $ticket->email }}</a></p>
+                                    @elseif($ticket->user_id != null)
                                         <p><a href="{{route('admin.users.detail', $ticket->user_id)}}" >&#64;{{ $ticket->name }}</a></p>
                                     @else
                                         <p>@<span>{{$ticket->name}}</span></p>
@@ -138,13 +145,13 @@
         <div class="modal-dialog">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title"> @lang('Close Support Ticket!')</h5>
+                    <h5 class="modal-title"> {{ $isContact ? __('Close Contact Submission') : __('Close Support Ticket!') }}</h5>
                     <button type="button" class="close" data-bs-dismiss="modal" aria-label="Close">
                         <i class="las la-times"></i>
                     </button>
                 </div>
                 <div class="modal-body">
-                    <p>@lang('Are you want to close this support ticket?')</p>
+                    <p>{{ $isContact ? __('Are you sure you want to close this contact submission?') : __('Are you want to close this support ticket?') }}</p>
                 </div>
                 <div class="modal-footer">
                     <form method="post" action="{{ route('admin.ticket.close', $ticket->id) }}">
@@ -164,7 +171,7 @@
 
 
 @push('breadcrumb-plugins')
-    <x-back route="{{ route('admin.ticket.index') }}" />
+    <x-back route="{{ $ticket->isContactSubmission() ? route('admin.contact.index') : route('admin.ticket.index') }}" />
 @endpush
 
 @push('script')

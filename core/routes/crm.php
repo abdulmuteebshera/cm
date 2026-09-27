@@ -131,6 +131,7 @@ Route::middleware('crm')->group(function () {
         Route::get('deposits', 'deposits')->middleware('crm.permission:portal.deposits')->name('deposits');
         Route::get('withdrawals', 'withdrawals')->middleware('crm.permission:portal.withdrawals')->name('withdrawals');
         Route::get('tickets', 'tickets')->middleware('crm.permission:portal.tickets')->name('tickets');
+        Route::get('contacts', 'contacts')->middleware('crm.permission:portal.tickets')->name('contacts');
         Route::get('investments', 'investments')->middleware('crm.permission:portal.investments')->name('investments');
         Route::get('jobs', 'jobs')->middleware('crm.permission:portal.jobs')->name('jobs');
     });

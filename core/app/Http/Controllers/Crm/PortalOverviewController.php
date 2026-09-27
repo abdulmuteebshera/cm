@@ -41,9 +41,17 @@ class PortalOverviewController extends Controller
     public function tickets()
     {
         $pageTitle = 'Portal Support Tickets (Read-only)';
-        $tickets   = SupportTicket::with('user')->orderByDesc('id')->paginate(getPaginate());
+        $tickets   = SupportTicket::clientTickets()->with('user')->orderByDesc('id')->paginate(getPaginate());
 
         return view('crm.portal.tickets', compact('pageTitle', 'tickets'));
+    }
+
+    public function contacts()
+    {
+        $pageTitle = 'Contact Form Submissions (Read-only)';
+        $tickets   = SupportTicket::contactSubmissions()->orderByDesc('id')->paginate(getPaginate());
+
+        return view('crm.portal.contacts', compact('pageTitle', 'tickets'));
     }
 
     public function investments()

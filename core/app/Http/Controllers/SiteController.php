@@ -176,7 +176,7 @@ class SiteController extends Controller
         }
 
         $ticket           = new SupportTicket();
-        $ticket->user_id  = auth()->id() ?? 0;
+        $ticket->user_id  = 0;
         $ticket->name     = $request->name;
         $ticket->email    = $request->email;
         $ticket->priority = 2;
@@ -188,7 +188,7 @@ class SiteController extends Controller
         $ticket->save();
 
         $adminNotification            = new AdminNotification();
-        $adminNotification->user_id   = auth()->user() ? auth()->user()->id : 0;
+        $adminNotification->user_id   = 0;
         $adminNotification->title     = 'A new contact message has been submitted';
         $adminNotification->click_url = urlPath('admin.ticket.view', $ticket->id);
         $adminNotification->save();
@@ -198,9 +198,9 @@ class SiteController extends Controller
         $message->message           = $messageBody;
         $message->save();
 
-        $notify[] = ['success', 'Ticket created successfully!'];
+        $notify[] = ['success', 'Your message has been submitted successfully. Our team will contact you shortly.'];
 
-        return to_route('ticket.view', [$ticket->ticket])->withNotify($notify);
+        return to_route('contact')->withNotify($notify);
     }
 
     public function policyPages($slug, $id)

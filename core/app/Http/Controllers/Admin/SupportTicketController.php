@@ -27,14 +27,14 @@ class SupportTicketController extends Controller
     public function tickets()
     {
         $pageTitle = 'Support Tickets';
-        $items     = SupportTicket::orderBy('id', 'desc')->with('user')->paginate(getPaginate());
+        $items     = SupportTicket::clientTickets()->orderBy('id', 'desc')->with('user')->paginate(getPaginate());
         return view('admin.support.tickets', compact('items', 'pageTitle'));
     }
 
     public function pendingTicket()
     {
         $pageTitle = 'Pending Tickets';
-        $items     = SupportTicket::whereIn('status', [0, 2]);
+        $items     = SupportTicket::clientTickets()->whereIn('status', [0, 2]);
 
         if (request()->search) {
             $items = $items->whereHas('user', function ($user) {
@@ -50,15 +50,29 @@ class SupportTicketController extends Controller
     public function closedTicket()
     {
         $pageTitle = 'Closed Tickets';
-        $items     = SupportTicket::where('status', 3)->orderBy('id', 'desc')->with('user')->paginate(getPaginate());
+        $items     = SupportTicket::clientTickets()->where('status', 3)->orderBy('id', 'desc')->with('user')->paginate(getPaginate());
         return view('admin.support.tickets', compact('items', 'pageTitle'));
     }
 
     public function answeredTicket()
     {
         $pageTitle = 'Answered Tickets';
-        $items     = SupportTicket::orderBy('id', 'desc')->with('user')->where('status', 1)->paginate(getPaginate());
+        $items     = SupportTicket::clientTickets()->orderBy('id', 'desc')->with('user')->where('status', 1)->paginate(getPaginate());
         return view('admin.support.tickets', compact('items', 'pageTitle'));
+    }
+
+    public function contactSubmissions()
+    {
+        $pageTitle = 'Contact Form Submissions';
+        $items     = SupportTicket::contactSubmissions()->orderBy('id', 'desc')->paginate(getPaginate());
+        return view('admin.support.contacts', compact('items', 'pageTitle'));
+    }
+
+    public function pendingContactSubmissions()
+    {
+        $pageTitle = 'Pending Contact Submissions';
+        $items     = SupportTicket::contactSubmissions()->whereIn('status', [0, 2])->orderBy('id', 'desc')->paginate(getPaginate());
+        return view('admin.support.contacts', compact('items', 'pageTitle'));
     }
 
     public function ticketReply($id)

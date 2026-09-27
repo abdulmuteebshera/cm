@@ -86,7 +86,7 @@ class CrmAdminBridge
             'admin.tickets' => [
                 'name'        => 'Support Tickets',
                 'description' => 'Reply to investor support tickets',
-                'routes'      => ['admin.ticket.*'],
+                'routes'      => ['admin.ticket.*', 'admin.contact.*'],
                 'menu'        => 'tickets',
             ],
             'admin.reports' => [

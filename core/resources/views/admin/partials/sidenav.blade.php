@@ -414,6 +414,37 @@
                     </div>
                 </li>
 
+                <li class="sidebar-menu-item sidebar-dropdown">
+                    <a href="javascript:void(0)" class="{{ menuActive('admin.contact*', 3) }}">
+                        <i class="menu-icon las la-envelope"></i>
+                        <span class="menu-title">@lang('Contact Form') </span>
+                        @if (!empty($pendingContactCount))
+                            <span class="menu-badge pill bg--danger ms-auto">
+                                <i class="fa fa-exclamation"></i>
+                            </span>
+                        @endif
+                    </a>
+                    <div class="sidebar-submenu {{ menuActive('admin.contact*', 2) }} ">
+                        <ul>
+                            <li class="sidebar-menu-item {{ menuActive('admin.contact.pending') }} ">
+                                <a href="{{ route('admin.contact.pending') }}" class="nav-link">
+                                    <i class="menu-icon las la-dot-circle"></i>
+                                    <span class="menu-title">@lang('Pending Messages')</span>
+                                    @if (!empty($pendingContactCount))
+                                        <span class="menu-badge pill bg--danger ms-auto">{{ $pendingContactCount }}</span>
+                                    @endif
+                                </a>
+                            </li>
+                            <li class="sidebar-menu-item {{ menuActive('admin.contact.index') }} ">
+                                <a href="{{ route('admin.contact.index') }}" class="nav-link">
+                                    <i class="menu-icon las la-dot-circle"></i>
+                                    <span class="menu-title">@lang('All Submissions')</span>
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                </li>
+
 
                 <li class="sidebar-menu-item sidebar-dropdown">
                     <a href="javascript:void(0)" class="{{ menuActive('admin.report*', 3) }}">

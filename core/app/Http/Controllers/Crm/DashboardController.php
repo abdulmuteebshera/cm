@@ -163,7 +163,7 @@ class DashboardController extends Controller
             $stats['investors']   = User::count();
             $stats['deposits']    = class_exists(Deposit::class) ? Deposit::where('status', 1)->count() : 0;
             $stats['withdrawals'] = class_exists(Withdrawal::class) ? Withdrawal::where('status', 1)->count() : 0;
-            $stats['tickets']     = class_exists(SupportTicket::class) ? SupportTicket::whereIn('status', [0, 2])->count() : 0;
+            $stats['tickets']     = class_exists(SupportTicket::class) ? SupportTicket::clientTickets()->whereIn('status', [0, 2])->count() : 0;
         } catch (\Throwable $e) {
         }
 

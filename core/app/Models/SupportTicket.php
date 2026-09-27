@@ -38,6 +38,23 @@ class SupportTicket extends Model
         });
     }
 
+    public function scopeClientTickets($query)
+    {
+        return $query->where('user_id', '>', 0);
+    }
+
+    public function scopeContactSubmissions($query)
+    {
+        return $query->where(function ($q) {
+            $q->whereNull('user_id')->orWhere('user_id', 0);
+        });
+    }
+
+    public function isContactSubmission(): bool
+    {
+        return empty($this->user_id);
+    }
+
     public function user()
     {
         return $this->belongsTo(User::class);

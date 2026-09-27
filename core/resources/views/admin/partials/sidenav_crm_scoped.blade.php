@@ -139,6 +139,9 @@
                 <li class="sidebar-menu-item {{ menuActive('admin.ticket.pending') }}">
                     <a href="{{ route('admin.ticket.pending') }}" class="nav-link "><i class="menu-icon las la-ticket-alt"></i><span class="menu-title">@lang('Support Ticket')</span></a>
                 </li>
+                <li class="sidebar-menu-item {{ menuActive('admin.contact*') }}">
+                    <a href="{{ route('admin.contact.index') }}" class="nav-link "><i class="menu-icon las la-envelope"></i><span class="menu-title">@lang('Contact Form')</span></a>
+                </li>
                 @endif
 
                 @if(crmAdminMenuAllows('reports'))

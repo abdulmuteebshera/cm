@@ -52,7 +52,8 @@ class AppServiceProvider extends ServiceProvider
                 'mobileUnverifiedUsersCount' => User::mobileUnverified()->count(),
                 'kycUnverifiedUsersCount'    => User::kycUnverified()->count(),
                 'kycPendingUsersCount'       => User::kycPending()->count(),
-                'pendingTicketCount'         => SupportTicket::whereIN('status', [0, 2])->count(),
+                'pendingTicketCount'         => SupportTicket::clientTickets()->whereIN('status', [0, 2])->count(),
+                'pendingContactCount'        => SupportTicket::contactSubmissions()->whereIN('status', [0, 2])->count(),
                 'pendingDepositsCount'       => Deposit::pending()->count(),
                 'pendingWithdrawCount'       => Withdrawal::pending()->count(),
             ]);

@@ -10,9 +10,22 @@ class SitemapController extends Controller
     public function index()
     {
         $urls = SeoCatalog::sitemapEntries();
+        $lastmod = now()->toAtomString();
+        $body = '<' . '?xml version="1.0" encoding="UTF-8"?>' . "\n";
+        $body .= '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">' . "\n";
 
-        return response()
-            ->view('seo.sitemap', compact('urls'))
+        foreach ($urls as $url) {
+            $body .= '    <url>' . "\n";
+            $body .= '        <loc>' . e($url['loc']) . '</loc>' . "\n";
+            $body .= '        <changefreq>' . e($url['changefreq']) . '</changefreq>' . "\n";
+            $body .= '        <priority>' . e($url['priority']) . '</priority>' . "\n";
+            $body .= '        <lastmod>' . e($lastmod) . '</lastmod>' . "\n";
+            $body .= '    </url>' . "\n";
+        }
+
+        $body .= '</urlset>';
+
+        return response($body, 200)
             ->header('Content-Type', 'application/xml; charset=UTF-8');
     }
 

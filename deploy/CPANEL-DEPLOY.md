@@ -43,6 +43,22 @@ php artisan optimize:clear
 
 `ec:setup-live` creates only `ec_*` tables. `--seed` adds the default campaign admin, SMTP settings row, and templates (does not change portal users or investor data).
 
+### Email campaign cron (Laravel 9)
+
+Add **once per minute** (adjust paths):
+
+```bash
+cd /home/tracklyn/crownmairecapital.com/core && /usr/local/bin/php artisan schedule:run >> /dev/null 2>&1
+```
+
+Or run the sender directly (same minute cadence):
+
+```bash
+cd /home/tracklyn/crownmairecapital.com/core && /usr/local/bin/php artisan ec:process-campaigns >> /dev/null 2>&1
+```
+
+Verify: `php artisan schedule:run` must not error. On Laravel 9, `everyTenSeconds` is not available; sends run about **once per minute** per running campaign while cron is active.
+
 ## 4. Writable upload folders
 
 ```bash

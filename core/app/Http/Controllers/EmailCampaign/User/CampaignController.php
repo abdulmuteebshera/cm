@@ -95,7 +95,14 @@ class CampaignController extends Controller
         $etaSeconds = $campaign->estimatedSecondsRemaining();
         $recipients = EcCampaignRecipient::query()->where('ec_campaign_id', $campaign->id)->latest('id')->paginate(30);
 
-        return view('emailcampaign.user.campaigns.show', compact('pageTitle', 'campaign', 'remaining', 'etaSeconds', 'recipients'));
+        $failures = EcCampaignRecipient::query()
+            ->where('ec_campaign_id', $campaign->id)
+            ->where('status', 'failed')
+            ->orderByDesc('id')
+            ->limit(20)
+            ->get();
+
+        return view('emailcampaign.user.campaigns.show', compact('pageTitle', 'campaign', 'remaining', 'etaSeconds', 'recipients', 'failures'));
     }
 
     public function updateContent(Request $request, int $id)
@@ -291,6 +298,8 @@ class CampaignController extends Controller
         $remaining = $campaign->remainingCount();
         $etaSeconds = $campaign->estimatedSecondsRemaining();
 
+        $latest = $campaign->latestSendFailure();
+
         return response()->json([
             'status'          => $campaign->status,
             'sent'            => (int) $campaign->sent_count,
@@ -300,6 +309,7 @@ class CampaignController extends Controller
             'eta_seconds'     => $etaSeconds,
             'eta_human'       => $this->formatDuration($etaSeconds),
             'next_send_at'    => optional($campaign->next_send_at)->toIso8601String(),
+            'last_error'      => $latest?->error_message,
         ]);
     }
 

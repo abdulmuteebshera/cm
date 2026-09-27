@@ -15,6 +15,14 @@ class EcMailSender
     {
         $settings = EcMailSetting::current();
 
+        if (empty($settings->smtp_host) || str_contains(strtolower($settings->smtp_host), 'example.com')) {
+            throw new MailException('SMTP is not configured. Go to Email Campaign Admin → SMTP / Sender and save real Gmail (or other) credentials.');
+        }
+
+        if (empty($settings->smtp_username) || ($settings->smtp_password === null || $settings->smtp_password === '')) {
+            throw new MailException('SMTP username or password is missing. Re-save mail settings with your app password.');
+        }
+
         $mail = new PHPMailer(true);
         $mail->isSMTP();
         $mail->Host       = $settings->smtp_host;
@@ -24,6 +32,14 @@ class EcMailSender
         $mail->Port       = (int) $settings->smtp_port;
         $mail->CharSet    = 'UTF-8';
         $mail->Encoding   = 'base64';
+        $mail->Timeout    = 30;
+        $mail->SMTPOptions = [
+            'ssl' => [
+                'verify_peer'       => true,
+                'verify_peer_name'  => true,
+                'allow_self_signed' => false,
+            ],
+        ];
 
         if ($settings->smtp_encryption === 'ssl') {
             $mail->SMTPSecure = PHPMailer::ENCRYPTION_SMTPS;

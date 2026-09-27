@@ -29,7 +29,19 @@ cd core
 php artisan migrate:new-tables-only
 ```
 
-This adds tables such as `job_posts`, `job_applications`, and CRM tables (`crm_staff`, `crm_roles`, etc.) when missing. It does **not** modify `deposits`, `withdrawals`, `support_tickets`, `users`, or other live data tables.
+This adds tables such as `job_posts`, `job_applications`, CRM tables (`crm_*`), and email campaign tables (`ec_*`) when missing. It does **not** modify `deposits`, `withdrawals`, `support_tickets`, `users`, or other live data tables.
+
+### Email campaign only (after pull)
+
+If `/emailcampaign/admin` shows **ec_admins doesn't exist**, run:
+
+```bash
+cd core
+php artisan ec:setup-live --seed
+php artisan optimize:clear
+```
+
+`ec:setup-live` creates only `ec_*` tables. `--seed` adds the default campaign admin, SMTP settings row, and templates (does not change portal users or investor data).
 
 ## 4. Writable upload folders
 
@@ -68,6 +80,8 @@ Browser: Ctrl+F5. Bump CSS `?v=` in views if styles look stale.
 | Trader | `/internalportal/trader` |
 | Finance | `/internalportal/finance` |
 | Live investor admin (unchanged) | `/admin` |
+| Email campaign admin | `/emailcampaign/admin` |
+| Email campaign users | `/emailcampaign/login` |
 
 ---
 

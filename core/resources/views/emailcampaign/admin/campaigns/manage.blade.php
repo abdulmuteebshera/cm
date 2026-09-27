@@ -28,8 +28,12 @@
         <div class="ec-stat"><strong id="ec-eta">—</strong><span>Est. completion (10s between emails)</span></div>
     </div>
     <div class="ec-progress"><span id="ec-progress-bar" style="width:{{ $pct }}%"></span></div>
-    <p class="ec-hint">Ensure SMTP is configured under Mail Settings. Run server cron for <code>php artisan schedule:run</code> every minute.</p>
+    <p class="ec-hint">Configure <a href="{{ route('ec.admin.mail.edit') }}">SMTP</a> and use <strong>Test SMTP</strong> there. For automatic sending, add cPanel cron every minute: <code>php artisan schedule:run</code> from the <code>core</code> folder.</p>
+    <form method="post" action="{{ route('ec.admin.campaigns.process_queue') }}" style="margin-top:8px">@csrf<button type="submit" class="crm-btn crm-btn--ghost crm-btn--sm">Run send worker once</button></form>
+    <div id="ec-live-error" role="alert"></div>
 </section>
+
+@include('emailcampaign.partials.send_errors', ['campaign' => $campaign, 'failures' => $failures ?? null])
 
 <section class="crm-card" style="margin-top:16px">
     <h2 class="crm-card__title">Campaign content</h2>
@@ -78,7 +82,7 @@
     @endif
     @foreach($recipients as $r)
         <div class="crm-list-row">
-            <div><strong>{{ $r->email }}</strong><span>{{ $r->name }} · {{ ucfirst($r->status) }}</span></div>
+            <div><strong>{{ $r->email }}</strong><span>{{ $r->name }} · {{ ucfirst($r->status) }}@if($r->error_message) — {{ $r->error_message }}@endif</span></div>
         </div>
     @endforeach
     {{ $recipients->links() }}
@@ -99,6 +103,16 @@
                 document.getElementById('ec-eta').textContent = d.eta_human || '—';
                 const pct = d.total > 0 ? Math.round((d.sent / d.total) * 100) : 0;
                 document.getElementById('ec-progress-bar').style.width = pct + '%';
+                const errBox = document.getElementById('ec-live-error');
+                if (errBox) {
+                    if (d.failed > 0 && d.last_error) {
+                        errBox.textContent = 'Latest send error (' + d.failed + ' failed): ' + d.last_error;
+                        errBox.classList.add('is-visible');
+                    } else {
+                        errBox.classList.remove('is-visible');
+                        errBox.textContent = '';
+                    }
+                }
             }).catch(() => {});
     };
     refresh();

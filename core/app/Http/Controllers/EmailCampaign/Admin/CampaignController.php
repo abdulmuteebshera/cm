@@ -11,6 +11,7 @@ use App\Models\EmailCampaign\EcGroupMember;
 use App\Models\EmailCampaign\EcTemplate;
 use App\Support\EmailCampaign\EcRecipientImport;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Auth;
 
 class CampaignController extends Controller
@@ -21,6 +22,20 @@ class CampaignController extends Controller
         $campaigns = EcCampaign::query()->with(['user', 'admin', 'template'])->latest('id')->paginate(25);
 
         return view('emailcampaign.admin.campaigns.index', compact('pageTitle', 'campaigns'));
+    }
+
+    public function processQueue()
+    {
+        Artisan::call('ec:process-campaigns');
+
+        EcActivityLog::record(
+            'admin',
+            Auth::guard('ec_admin')->id(),
+            'campaign.queue_processed',
+            'Manual send worker run (processes pending emails for running campaigns)'
+        );
+
+        return back()->withNotify([['success', 'Send worker ran once (one pending email per running campaign). Add cPanel cron: * * * * * php artisan schedule:run for automatic sending every 10 seconds.']]);
     }
 
     public function create()
@@ -90,7 +105,14 @@ class CampaignController extends Controller
         $remaining = $campaign->remainingCount();
         $etaSeconds = $campaign->estimatedSecondsRemaining();
 
-        return view('emailcampaign.admin.campaigns.show', compact('pageTitle', 'campaign', 'remaining', 'etaSeconds'));
+        $failures = EcCampaignRecipient::query()
+            ->where('ec_campaign_id', $campaign->id)
+            ->where('status', 'failed')
+            ->orderByDesc('id')
+            ->limit(20)
+            ->get();
+
+        return view('emailcampaign.admin.campaigns.show', compact('pageTitle', 'campaign', 'remaining', 'etaSeconds', 'failures'));
     }
 
     public function manage(int $id)
@@ -103,7 +125,14 @@ class CampaignController extends Controller
         $etaSeconds = $campaign->estimatedSecondsRemaining();
         $recipients = EcCampaignRecipient::query()->where('ec_campaign_id', $campaign->id)->latest('id')->paginate(30);
 
-        return view('emailcampaign.admin.campaigns.manage', compact('pageTitle', 'campaign', 'remaining', 'etaSeconds', 'recipients'));
+        $failures = EcCampaignRecipient::query()
+            ->where('ec_campaign_id', $campaign->id)
+            ->where('status', 'failed')
+            ->orderByDesc('id')
+            ->limit(20)
+            ->get();
+
+        return view('emailcampaign.admin.campaigns.manage', compact('pageTitle', 'campaign', 'remaining', 'etaSeconds', 'recipients', 'failures'));
     }
 
     public function updateContent(Request $request, int $id)
@@ -298,6 +327,8 @@ class CampaignController extends Controller
         $remaining = $campaign->remainingCount();
         $etaSeconds = $campaign->estimatedSecondsRemaining();
 
+        $latest = $campaign->latestSendFailure();
+
         return response()->json([
             'status'       => $campaign->status,
             'sent'         => (int) $campaign->sent_count,
@@ -307,6 +338,7 @@ class CampaignController extends Controller
             'eta_seconds'  => $etaSeconds,
             'eta_human'    => $this->formatDuration($etaSeconds),
             'next_send_at' => optional($campaign->next_send_at)->toIso8601String(),
+            'last_error'   => $latest?->error_message,
         ]);
     }
 

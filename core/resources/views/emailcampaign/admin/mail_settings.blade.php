@@ -40,5 +40,10 @@
         </div>
         <button type="submit" class="crm-btn crm-btn--accent">Save mail settings</button>
     </form>
+    <form method="post" action="{{ route('ec.admin.mail.test') }}" class="crm-form crm-form__grid" style="margin-top:20px;padding-top:20px;border-top:1px solid var(--crm-line)">
+        @csrf
+        <label><span>Send test email to</span><input type="email" name="test_email" value="{{ old('test_email', $settings->from_email) }}" required></label>
+        <button type="submit" class="crm-btn crm-btn--ghost">Test SMTP now</button>
+    </form>
 </section>
 @endsection

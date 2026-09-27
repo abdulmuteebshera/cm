@@ -77,6 +77,7 @@ class Kernel extends HttpKernel
         'ec.admin.guest' => \App\Http\Middleware\RedirectIfEcAdmin::class,
         'ec.user' => \App\Http\Middleware\RedirectIfNotEcUser::class,
         'ec.user.guest' => \App\Http\Middleware\RedirectIfEcUser::class,
+        'ec.schema' => \App\Http\Middleware\EnsureEcTables::class,
 
         'registration.status' => \App\Http\Middleware\AllowRegistration::class,
         'check.status' => \App\Http\Middleware\CheckStatus::class,

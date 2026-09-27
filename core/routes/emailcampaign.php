@@ -38,6 +38,7 @@ Route::middleware('ec.admin')->prefix('admin')->name('admin.')->group(function (
     Route::controller('Admin\MailSettingController')->group(function (): void {
         Route::get('mail-settings', 'edit')->name('mail.edit');
         Route::post('mail-settings', 'update')->name('mail.update');
+        Route::post('mail-settings/test', 'test')->name('mail.test');
     });
 
     Route::controller('Admin\UserController')->prefix('users')->name('users.')->group(function (): void {
@@ -58,6 +59,7 @@ Route::middleware('ec.admin')->prefix('admin')->name('admin.')->group(function (
 
     Route::controller('Admin\CampaignController')->prefix('campaigns')->name('campaigns.')->group(function (): void {
         Route::get('/', 'index')->name('index');
+        Route::post('process-queue', 'processQueue')->name('process_queue');
         Route::get('create', 'create')->name('create');
         Route::post('store', 'store')->name('store');
         Route::get('{id}/manage', 'manage')->name('manage');

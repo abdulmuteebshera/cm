@@ -88,4 +88,12 @@ class EcCampaign extends Model
         $this->failed_count = $this->recipients()->whereIn('status', ['failed', 'skipped'])->count();
         $this->save();
     }
+
+    public function latestSendFailure(): ?EcCampaignRecipient
+    {
+        return $this->recipients()
+            ->where('status', 'failed')
+            ->orderByDesc('id')
+            ->first();
+    }
 }

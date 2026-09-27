@@ -29,7 +29,10 @@
     </div>
     <div class="ec-progress"><span id="ec-progress-bar" style="width:{{ $pct }}%"></span></div>
     <p class="ec-hint">Delivery uses the admin SMTP account. Pause anytime; resume continues with the next pending recipient.</p>
+    <div id="ec-live-error" role="alert"></div>
 </section>
+
+@include('emailcampaign.partials.send_errors', ['campaign' => $campaign, 'failures' => $failures ?? null])
 
 <section class="crm-card" style="margin-top:16px">
     <h2 class="crm-card__title">Campaign content</h2>
@@ -78,7 +81,7 @@
     @endif
     @foreach($recipients as $r)
         <div class="crm-list-row">
-            <div><strong>{{ $r->email }}</strong><span>{{ $r->name }} · {{ ucfirst($r->status) }}</span></div>
+            <div><strong>{{ $r->email }}</strong><span>{{ $r->name }} · {{ ucfirst($r->status) }}@if($r->error_message) — {{ $r->error_message }}@endif</span></div>
         </div>
     @endforeach
     {{ $recipients->links() }}
@@ -99,6 +102,16 @@
                 document.getElementById('ec-eta').textContent = d.eta_human || '—';
                 const pct = d.total > 0 ? Math.round((d.sent / d.total) * 100) : 0;
                 document.getElementById('ec-progress-bar').style.width = pct + '%';
+                const errBox = document.getElementById('ec-live-error');
+                if (errBox) {
+                    if (d.failed > 0 && d.last_error) {
+                        errBox.textContent = 'Latest send error (' + d.failed + ' failed): ' + d.last_error;
+                        errBox.classList.add('is-visible');
+                    } else {
+                        errBox.classList.remove('is-visible');
+                        errBox.textContent = '';
+                    }
+                }
             }).catch(() => {});
     };
     refresh();

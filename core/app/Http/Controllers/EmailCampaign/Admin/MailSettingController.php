@@ -5,6 +5,7 @@ namespace App\Http\Controllers\EmailCampaign\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\EmailCampaign\EcActivityLog;
 use App\Models\EmailCampaign\EcMailSetting;
+use App\Support\EmailCampaign\EcMailSender;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -60,5 +61,33 @@ class MailSettingController extends Controller
         );
 
         return back()->withNotify([['success', 'Mail settings saved. All user campaigns will send through this account.']]);
+    }
+
+    public function test(Request $request, EcMailSender $sender)
+    {
+        $data = $request->validate([
+            'test_email' => 'required|email',
+        ]);
+
+        try {
+            $sender->send(
+                $data['test_email'],
+                'Test',
+                'Crownmaire Email Campaign — SMTP test',
+                '<p>If you received this, SMTP is working for the email campaign module.</p>',
+                'If you received this, SMTP is working for the email campaign module.'
+            );
+        } catch (\Throwable $e) {
+            return back()->withNotify([['error', 'SMTP test failed: ' . $e->getMessage()]]);
+        }
+
+        EcActivityLog::record(
+            'admin',
+            Auth::guard('ec_admin')->id(),
+            'mail_settings.test',
+            'SMTP test sent to ' . $data['test_email']
+        );
+
+        return back()->withNotify([['success', 'Test email sent to ' . $data['test_email'] . '. Check inbox and spam.']]);
     }
 }

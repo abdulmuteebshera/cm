@@ -55,7 +55,7 @@ class RouteServiceProvider extends ServiceProvider
                     ->name('crm.')
                     ->group(base_path('routes/crm.php'));
 
-                Route::middleware(['web'])
+                Route::middleware(['web', 'ec.schema'])
                     ->namespace('EmailCampaign')
                     ->prefix('emailcampaign')
                     ->name('ec.')

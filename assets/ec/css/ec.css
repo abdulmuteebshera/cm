@@ -45,3 +45,21 @@
   margin: 0 0 12px;
   line-height: 1.5;
 }
+.ec-send-errors__latest {
+  background: rgba(248, 113, 113, 0.08);
+  border: 1px solid rgba(248, 113, 113, 0.25);
+  border-radius: 10px;
+  padding: 14px 16px;
+  margin-bottom: 14px;
+}
+.ec-send-errors__latest p {
+  margin: 8px 0;
+  color: #fecaca;
+  font-size: 0.9rem;
+  line-height: 1.5;
+  word-break: break-word;
+}
+.ec-send-errors__latest span { font-size: 0.75rem; color: var(--crm-muted); }
+.ec-send-errors__row span { display: block; color: #fca5a5; font-size: 0.82rem; margin-top: 4px; word-break: break-word; }
+#ec-live-error { display: none; margin-top: 12px; padding: 12px; border-radius: 10px; background: rgba(248,113,113,.12); border: 1px solid rgba(248,113,113,.3); color: #fecaca; font-size: 0.85rem; }
+#ec-live-error.is-visible { display: block; }

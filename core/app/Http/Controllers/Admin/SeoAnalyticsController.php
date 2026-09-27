@@ -7,6 +7,7 @@ use App\Models\SeoEvent;
 use App\Models\SeoPageView;
 use App\Models\SeoVisitorSession;
 use App\Support\Seo\SeoCatalog;
+use App\Support\Seo\SeoSchema;
 use App\Support\Seo\SeoSite;
 use App\Support\Seo\SeoTracker;
 use Carbon\Carbon;
@@ -24,26 +25,30 @@ class SeoAnalyticsController extends Controller
         [$from, $range] = $this->range($request);
         $pageTitle = 'SEO Analytics';
 
-        $sessions = SeoVisitorSession::where('started_at', '>=', $from);
+        $startCol   = SeoSchema::sessionStart();
+        $visitorCol = SeoSchema::visitor();
+        $countCol   = SeoSchema::pageCount();
+
+        $sessions = SeoVisitorSession::where($startCol, '>=', $from);
         $views    = SeoPageView::where('entered_at', '>=', $from);
-        $events   = SeoEvent::where($this->eventTimeColumn(), '>=', $from);
+        $events   = SeoEvent::where(SeoSchema::eventTime(), '>=', $from);
 
         $sessionCount = (clone $sessions)->count();
-        $visitorCount = (clone $sessions)->distinct('visitor_key')->count('visitor_key');
+        $visitorCount = (clone $sessions)->distinct($visitorCol)->count($visitorCol);
         $pageViews    = (clone $views)->count();
         $clickCount   = (clone $events)->where('event_type', 'click')->count();
-        $avgEngage    = (int) round((clone $sessions)->avg($this->engageColumn()) ?: 0);
-        $bounces      = (clone $sessions)->where('page_count', '<=', 1)->count();
+        $avgEngage    = (int) round((clone $sessions)->avg(SeoSchema::engage()) ?: 0);
+        $bounces      = (clone $sessions)->where($countCol, '<=', 1)->count();
         $bounceRate   = $sessionCount ? round(($bounces / $sessionCount) * 100, 1) : 0;
 
         $daily = SeoVisitorSession::select(
-            DB::raw('DATE(started_at) as day'),
+            DB::raw('DATE(' . $startCol . ') as day'),
             DB::raw('COUNT(*) as sessions'),
-            DB::raw('COUNT(DISTINCT visitor_key) as visitors')
+            DB::raw('COUNT(DISTINCT ' . $visitorCol . ') as visitors')
         )
-            ->where('started_at', '>=', $from)
-            ->groupBy(DB::raw('DATE(started_at)'))
-            ->orderBy(DB::raw('DATE(started_at)'))
+            ->where($startCol, '>=', $from)
+            ->groupBy(DB::raw('DATE(' . $startCol . ')'))
+            ->orderBy(DB::raw('DATE(' . $startCol . ')'))
             ->get();
 
         $topPages = SeoPageView::select('path', DB::raw('COUNT(*) as views'), DB::raw('AVG(duration_seconds) as avg_time'))
@@ -54,25 +59,25 @@ class SeoAnalyticsController extends Controller
             ->get();
 
         $topCountries = SeoVisitorSession::select('country', DB::raw('COUNT(*) as total'))
-            ->where('started_at', '>=', $from)
+            ->where($startCol, '>=', $from)
             ->groupBy('country')
             ->orderByDesc('total')
             ->limit(8)
             ->get();
 
         $devices = SeoVisitorSession::select('device_type', DB::raw('COUNT(*) as total'))
-            ->where('started_at', '>=', $from)
+            ->where($startCol, '>=', $from)
             ->groupBy('device_type')
             ->orderByDesc('total')
             ->get();
 
-        $sources = SeoVisitorSession::select($this->channelColumn() . ' as channel', DB::raw('COUNT(*) as total'))
-            ->where('started_at', '>=', $from)
-            ->groupBy($this->channelColumn())
+        $sources = SeoVisitorSession::select(SeoSchema::channel() . ' as channel', DB::raw('COUNT(*) as total'))
+            ->where($startCol, '>=', $from)
+            ->groupBy(SeoSchema::channel())
             ->orderByDesc('total')
             ->get();
 
-        $recent = SeoVisitorSession::orderByDesc('last_seen_at')->limit(10)->get();
+        $recent = SeoVisitorSession::orderByDesc(SeoSchema::lastSeen())->limit(10)->get();
 
         $widget = [
             'visitors'    => $visitorCount,
@@ -98,7 +103,7 @@ class SeoAnalyticsController extends Controller
         [$from, $range] = $this->range($request);
         $pageTitle = 'SEO Visitors';
 
-        $query = SeoVisitorSession::where('started_at', '>=', $from)->orderByDesc('last_seen_at');
+        $query = SeoVisitorSession::where(SeoSchema::sessionStart(), '>=', $from)->orderByDesc(SeoSchema::lastSeen());
 
         if ($request->filled('country')) {
             $query->where('country', $request->country);
@@ -107,15 +112,15 @@ class SeoAnalyticsController extends Controller
             $query->where('device_type', $request->device);
         }
         if ($request->filled('channel')) {
-            $query->where($this->channelColumn(), $request->channel);
+            $query->where(SeoSchema::channel(), $request->channel);
         }
         if ($request->filled('q')) {
             $q = $request->q;
             $query->where(function ($inner) use ($q) {
-                $inner->where('ip_address', 'like', "%{$q}%")
+                $inner->where(SeoSchema::ip(), 'like', "%{$q}%")
                     ->orWhere('city', 'like', "%{$q}%")
                     ->orWhere('country', 'like', "%{$q}%")
-                    ->orWhere('landing_path', 'like', "%{$q}%")
+                    ->orWhere(SeoSchema::landing(), 'like', "%{$q}%")
                     ->orWhere('source', 'like', "%{$q}%");
             });
         }
@@ -134,7 +139,7 @@ class SeoAnalyticsController extends Controller
         $session = SeoVisitorSession::with(['pageViews' => function ($q) {
             $q->orderBy('entered_at');
         }, 'events' => function ($q) {
-            $q->orderBy($this->eventTimeColumn());
+            $q->orderBy(SeoSchema::eventTime());
         }])->findOrFail($id);
 
         $pageTitle = 'Visitor session #' . $session->id;
@@ -154,7 +159,7 @@ class SeoAnalyticsController extends Controller
         $pages = SeoPageView::select(
             'path',
             DB::raw('COUNT(*) as views'),
-            DB::raw('COUNT(DISTINCT visitor_key) as visitors'),
+            DB::raw('COUNT(DISTINCT ' . SeoSchema::visitor('seo_page_views') . ') as visitors'),
             DB::raw('AVG(duration_seconds) as avg_time'),
             DB::raw('AVG(scroll_depth) as avg_scroll'),
             DB::raw('MAX(entered_at) as last_visit')
@@ -180,10 +185,10 @@ class SeoAnalyticsController extends Controller
             'country',
             'country_code',
             DB::raw('COUNT(*) as sessions'),
-            DB::raw('COUNT(DISTINCT visitor_key) as visitors'),
-            DB::raw('AVG(' . $this->engageColumn() . ') as avg_time')
+            DB::raw('COUNT(DISTINCT ' . SeoSchema::visitor() . ') as visitors'),
+            DB::raw('AVG(' . SeoSchema::engage() . ') as avg_time')
         )
-            ->where('started_at', '>=', $from)
+            ->where(SeoSchema::sessionStart(), '>=', $from)
             ->groupBy('country', 'country_code')
             ->orderByDesc('sessions')
             ->get();
@@ -192,9 +197,9 @@ class SeoAnalyticsController extends Controller
             'city',
             'country',
             DB::raw('COUNT(*) as sessions'),
-            DB::raw('COUNT(DISTINCT visitor_key) as visitors')
+            DB::raw('COUNT(DISTINCT ' . SeoSchema::visitor() . ') as visitors')
         )
-            ->where('started_at', '>=', $from)
+            ->where(SeoSchema::sessionStart(), '>=', $from)
             ->groupBy('city', 'country')
             ->orderByDesc('sessions')
             ->paginate(getPaginate());
@@ -212,19 +217,19 @@ class SeoAnalyticsController extends Controller
         $pageTitle = 'Devices & browsers';
 
         $devices = SeoVisitorSession::select('device_type', DB::raw('COUNT(*) as total'))
-            ->where('started_at', '>=', $from)
+            ->where(SeoSchema::sessionStart(), '>=', $from)
             ->groupBy('device_type')
             ->orderByDesc('total')
             ->get();
 
         $browsers = SeoVisitorSession::select('browser', DB::raw('COUNT(*) as total'))
-            ->where('started_at', '>=', $from)
+            ->where(SeoSchema::sessionStart(), '>=', $from)
             ->groupBy('browser')
             ->orderByDesc('total')
             ->get();
 
         $oses = SeoVisitorSession::select('os', DB::raw('COUNT(*) as total'))
-            ->where('started_at', '>=', $from)
+            ->where(SeoSchema::sessionStart(), '>=', $from)
             ->groupBy('os')
             ->orderByDesc('total')
             ->get();
@@ -241,30 +246,32 @@ class SeoAnalyticsController extends Controller
         [$from, $range] = $this->range($request);
         $pageTitle = 'Traffic sources';
 
-        $channelCol = $this->channelColumn();
+        $channelCol = SeoSchema::channel();
+        $mediumCol = SeoSchema::medium();
+        $campaignCol = SeoSchema::campaign();
         $channels = SeoVisitorSession::select($channelCol . ' as channel', DB::raw('COUNT(*) as total'))
-            ->where('started_at', '>=', $from)
+            ->where(SeoSchema::sessionStart(), '>=', $from)
             ->groupBy($channelCol)
             ->orderByDesc('total')
             ->get();
 
         $sources = SeoVisitorSession::select(
             'source',
-            'utm_medium as medium',
+            $mediumCol . ' as medium',
             $channelCol . ' as channel',
             DB::raw('COUNT(*) as sessions'),
-            DB::raw('COUNT(DISTINCT visitor_key) as visitors')
+            DB::raw('COUNT(DISTINCT ' . SeoSchema::visitor() . ') as visitors')
         )
-            ->where('started_at', '>=', $from)
-            ->groupBy('source', 'utm_medium', $channelCol)
+            ->where(SeoSchema::sessionStart(), '>=', $from)
+            ->groupBy('source', $mediumCol, $channelCol)
             ->orderByDesc('sessions')
             ->paginate(getPaginate());
 
-        $campaigns = SeoVisitorSession::select('utm_campaign as campaign', DB::raw('COUNT(*) as total'))
-            ->where('started_at', '>=', $from)
-            ->whereNotNull('utm_campaign')
-            ->where('utm_campaign', '!=', '')
-            ->groupBy('utm_campaign')
+        $campaigns = SeoVisitorSession::select($campaignCol . ' as campaign', DB::raw('COUNT(*) as total'))
+            ->where(SeoSchema::sessionStart(), '>=', $from)
+            ->whereNotNull($campaignCol)
+            ->where($campaignCol, '!=', '')
+            ->groupBy($campaignCol)
             ->orderByDesc('total')
             ->get();
 
@@ -280,15 +287,16 @@ class SeoAnalyticsController extends Controller
         [$from, $range] = $this->range($request);
         $pageTitle = 'Clicks & engagement';
 
-        $eventTime = $this->eventTimeColumn();
+        $eventTime = SeoSchema::eventTime();
+        $hrefCol = SeoSchema::href();
         $topLinks = SeoEvent::select(
-            'href as target_url',
+            $hrefCol . ' as target_url',
             'label',
             DB::raw('COUNT(*) as clicks')
         )
             ->where('event_type', 'click')
             ->where($eventTime, '>=', $from)
-            ->groupBy('href', 'label')
+            ->groupBy($hrefCol, 'label')
             ->orderByDesc('clicks')
             ->limit(40)
             ->get();
@@ -350,21 +358,6 @@ class SeoAnalyticsController extends Controller
     protected function ready(): bool
     {
         return SeoTracker::ready();
-    }
-
-    protected function eventTimeColumn(): string
-    {
-        return \Illuminate\Support\Facades\Schema::hasColumn('seo_events', 'occurred_at') ? 'occurred_at' : 'created_at';
-    }
-
-    protected function engageColumn(): string
-    {
-        return \Illuminate\Support\Facades\Schema::hasColumn('seo_visitor_sessions', 'engaged_seconds') ? 'engaged_seconds' : 'duration_seconds';
-    }
-
-    protected function channelColumn(): string
-    {
-        return \Illuminate\Support\Facades\Schema::hasColumn('seo_visitor_sessions', 'channel') ? 'channel' : 'source';
     }
 
     protected function setupView()

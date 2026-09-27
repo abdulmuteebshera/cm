@@ -76,28 +76,36 @@ class SeoTracker
         $session    = self::currentSession($request, $visitorKey);
         $path       = self::path($request);
 
-        $view = SeoPageView::create([
-            'seo_visitor_session_id' => $session->id,
-            'visitor_key'            => $visitorKey,
-            'url'                    => Str::limit($request->fullUrl(), 500, ''),
-            'path'                   => Str::limit($path, 190, ''),
-            'page_title'             => Str::limit((string) $request->attributes->get('pageTitle', ''), 190, ''),
-            'referrer'               => Str::limit((string) $request->headers->get('referer'), 500, ''),
-            'query_string'           => Str::limit((string) $request->getQueryString(), 190, ''),
-            'entered_at'             => now(),
-            'duration_seconds'       => 0,
-            'scroll_depth'           => 0,
-        ]);
-
-        $updates = [
-            'last_seen_at' => now(),
-            'page_count'   => (int) $session->page_count + 1,
-            'is_bounce'    => ((int) $session->page_count + 1) <= 1,
+        $viewPayload = [
+            SeoSchema::sessionFk() => $session->id,
+            SeoSchema::visitor('seo_page_views') => $visitorKey,
+            'url'              => Str::limit($request->fullUrl(), 500, ''),
+            'path'             => Str::limit($path, 190, ''),
+            SeoSchema::pageTitle() => Str::limit((string) $request->attributes->get('pageTitle', ''), 190, ''),
+            'referrer'         => Str::limit((string) $request->headers->get('referer'), 500, ''),
+            'query_string'     => Str::limit((string) $request->getQueryString(), 190, ''),
+            'entered_at'       => now(),
+            'duration_seconds' => 0,
+            'scroll_depth'     => 0,
         ];
-        if (Schema::hasColumn('seo_visitor_sessions', 'exit_path')) {
-            $updates['exit_path'] = Str::limit($path, 190, '');
+
+        $view = SeoPageView::create(SeoSchema::only('seo_page_views', $viewPayload));
+
+        $countCol = SeoSchema::pageCount();
+        $current  = (int) ($session->getAttribute($countCol) ?? 0);
+        $updates  = [
+            SeoSchema::lastSeen() => now(),
+            $countCol             => $current + 1,
+        ];
+        if (SeoSchema::has('seo_visitor_sessions', 'is_bounce')) {
+            $updates['is_bounce'] = ($current + 1) <= 1;
         }
-        $session->forceFill($updates)->save();
+        $exitCol = SeoSchema::exitPage();
+        if (SeoSchema::has('seo_visitor_sessions', $exitCol)) {
+            $updates[$exitCol] = Str::limit($path, 190, '');
+        }
+
+        $session->forceFill(SeoSchema::only('seo_visitor_sessions', $updates))->save();
 
         return $view;
     }
@@ -132,47 +140,45 @@ class SeoTracker
             if ($scroll > (int) $view->scroll_depth) {
                 $view->scroll_depth = $scroll;
             }
-            if ($action === 'leave') {
-                $view->left_at = now();
+            if ($action === 'leave' && SeoSchema::has('seo_page_views', SeoSchema::leftAt())) {
+                $view->setAttribute(SeoSchema::leftAt(), now());
             }
             $view->save();
         }
 
-        $session->last_seen_at = now();
+        $session->setAttribute(SeoSchema::lastSeen(), now());
         if ($duration && $view) {
-            $engaged = (int) SeoPageView::where('seo_visitor_session_id', $session->id)->sum('duration_seconds');
-            if (Schema::hasColumn('seo_visitor_sessions', 'engaged_seconds')) {
+            $engaged = (int) SeoPageView::where(SeoSchema::sessionFk(), $session->id)->sum('duration_seconds');
+            if (SeoSchema::has('seo_visitor_sessions', 'engaged_seconds')) {
                 $session->engaged_seconds = $engaged;
             }
-            $first = $session->started_at ?: $session->created_at;
+            $first = $session->getAttribute(SeoSchema::sessionStart()) ?: $session->created_at;
             $session->duration_seconds = max(0, now()->diffInSeconds($first));
-            $session->is_bounce = $session->page_count <= 1;
+            if (SeoSchema::has('seo_visitor_sessions', 'is_bounce')) {
+                $session->is_bounce = (int) $session->getAttribute(SeoSchema::pageCount()) <= 1;
+            }
         }
         $session->save();
 
         if ($action === 'click') {
-            $payload = [
-                'seo_visitor_session_id' => $session->id,
-                'seo_page_view_id'       => $view?->id,
-                'visitor_key'            => $session->visitor_key,
-                'event_type'             => 'click',
-                'label'                  => Str::limit((string) $request->input('label'), 190, ''),
-                'href'                   => Str::limit((string) $request->input('href'), 500, ''),
-                'path'                   => Str::limit((string) ($view->path ?? $request->input('path')), 190, ''),
-            ];
-            if (Schema::hasColumn('seo_events', 'meta')) {
-                $payload['meta'] = [
+            $payload = SeoSchema::only('seo_events', [
+                SeoSchema::sessionFk('seo_events') => $session->id,
+                SeoSchema::pageViewFk()            => $view?->id,
+                SeoSchema::visitor('seo_events')   => $session->getAttribute(SeoSchema::visitor()) ?: $session->getAttribute(SeoSchema::visitor('seo_page_views')),
+                'event_type'                       => 'click',
+                'label'                            => Str::limit((string) $request->input('label'), 190, ''),
+                SeoSchema::href()                  => Str::limit((string) $request->input('href'), 500, ''),
+                'path'                             => Str::limit((string) ($view->path ?? $request->input('path')), 190, ''),
+                'occurred_at'                      => now(),
+                'meta'                             => [
                     'tag'  => $request->input('tag'),
                     'x'    => (int) $request->input('x'),
                     'y'    => (int) $request->input('y'),
                     'text' => Str::limit((string) $request->input('text'), 190, ''),
-                ];
-            }
-            if (Schema::hasColumn('seo_events', 'occurred_at')) {
-                $payload['occurred_at'] = now();
-            }
+                ],
+            ]);
             SeoEvent::create($payload);
-            if (Schema::hasColumn('seo_visitor_sessions', 'clicks')) {
+            if (SeoSchema::has('seo_visitor_sessions', 'clicks')) {
                 $session->increment('clicks');
             }
         }
@@ -196,8 +202,13 @@ class SeoTracker
         $session = $sid ? SeoVisitorSession::find($sid) : null;
 
         $idleLimit = now()->subMinutes(30);
-        if ($session && $session->visitor_key === $visitorKey && $session->last_seen_at && $session->last_seen_at->gte($idleLimit)) {
-            return $session;
+        $visitorCol = SeoSchema::visitor();
+        $lastSeen = $session?->getAttribute(SeoSchema::lastSeen());
+        if ($session && $session->getAttribute($visitorCol) === $visitorKey && $lastSeen) {
+            $lastSeenAt = $lastSeen instanceof \Carbon\CarbonInterface ? $lastSeen : \Carbon\Carbon::parse($lastSeen);
+            if ($lastSeenAt->gte($idleLimit)) {
+                return $session;
+            }
         }
 
         $ip = getRealIP();
@@ -213,50 +224,45 @@ class SeoTracker
         $source = SeoGeo::classifySource($request->headers->get('referer'), $utm);
         $path = self::path($request);
 
-        $data = [
-            'visitor_key'      => $visitorKey,
-            'session_key'      => bin2hex(random_bytes(8)),
-            'user_id'          => auth()->id(),
-            'ip_address'       => $ip,
-            'country'          => $geo['country'],
-            'country_code'     => $geo['country_code'],
-            'region'           => $geo['region'],
-            'city'             => $geo['city'],
-            'latitude'         => $geo['lat'],
-            'longitude'        => $geo['lng'],
-            'device_type'      => $device['device_type'],
-            'browser'          => $device['browser'],
-            'os'               => $device['os'],
-            'user_agent'       => Str::limit((string) $request->userAgent(), 500, ''),
-            'source'           => $source['source'],
-            'utm_source'       => $utm['utm_source'] ?: $source['source'],
-            'utm_medium'       => $utm['utm_medium'] ?: $source['medium'],
-            'utm_campaign'     => $utm['utm_campaign'] ?: $source['campaign'],
-            'utm_term'         => $utm['utm_term'] ?? null,
-            'utm_content'      => $utm['utm_content'] ?? null,
-            'referrer'         => Str::limit((string) $request->headers->get('referer'), 500, ''),
-            'referrer_host'    => $source['referrer_host'],
-            'landing_path'     => Str::limit($path, 190, ''),
-            'landing_url'      => Str::limit($request->fullUrl(), 500, ''),
-            'page_count'       => 0,
-            'duration_seconds' => 0,
-            'is_bounce'        => 1,
-            'started_at'       => now(),
-            'last_seen_at'     => now(),
-        ];
-
-        if (Schema::hasColumn('seo_visitor_sessions', 'channel')) {
-            $data['channel'] = $source['channel'];
-        }
-        if (Schema::hasColumn('seo_visitor_sessions', 'clicks')) {
-            $data['clicks'] = 0;
-        }
-        if (Schema::hasColumn('seo_visitor_sessions', 'exit_path')) {
-            $data['exit_path'] = Str::limit($path, 190, '');
-        }
-        if (Schema::hasColumn('seo_visitor_sessions', 'engaged_seconds')) {
-            $data['engaged_seconds'] = 0;
-        }
+        $data = SeoSchema::only('seo_visitor_sessions', [
+            $visitorCol                => $visitorKey,
+            'session_key'              => bin2hex(random_bytes(8)),
+            'user_id'                  => auth()->id(),
+            SeoSchema::ip()            => $ip,
+            'country'                  => $geo['country'],
+            'country_code'             => $geo['country_code'],
+            'region'                   => $geo['region'],
+            'city'                     => $geo['city'],
+            'latitude'                 => $geo['lat'],
+            'longitude'                => $geo['lng'],
+            'lat'                      => $geo['lat'],
+            'lng'                      => $geo['lng'],
+            'device_type'              => $device['device_type'],
+            'browser'                  => $device['browser'],
+            'os'                       => $device['os'],
+            'user_agent'               => Str::limit((string) $request->userAgent(), 500, ''),
+            'channel'                  => $source['channel'],
+            'source'                   => $source['source'],
+            'medium'                   => $utm['utm_medium'] ?: $source['medium'],
+            'campaign'                 => $utm['utm_campaign'] ?: $source['campaign'],
+            'utm_source'               => $utm['utm_source'] ?: $source['source'],
+            'utm_medium'               => $utm['utm_medium'] ?: $source['medium'],
+            'utm_campaign'             => $utm['utm_campaign'] ?: $source['campaign'],
+            'utm_term'                 => $utm['utm_term'] ?? null,
+            'utm_content'              => $utm['utm_content'] ?? null,
+            'referrer'                 => Str::limit((string) $request->headers->get('referer'), 500, ''),
+            'referrer_host'            => $source['referrer_host'],
+            SeoSchema::landing()       => Str::limit($path, 190, ''),
+            'landing_url'              => Str::limit($request->fullUrl(), 500, ''),
+            SeoSchema::pageCount()     => 0,
+            'clicks'                   => 0,
+            'duration_seconds'         => 0,
+            'engaged_seconds'          => 0,
+            'is_bounce'                => 1,
+            SeoSchema::sessionStart()  => now(),
+            SeoSchema::lastSeen()      => now(),
+            SeoSchema::exitPage()      => Str::limit($path, 190, ''),
+        ]);
 
         $session = SeoVisitorSession::create($data);
         $request->session()->put(self::SESSION_KEY, $session->id);

@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Support\Seo\SeoSchema;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
@@ -16,12 +17,12 @@ class SeoEvent extends Model
 
     public function session(): BelongsTo
     {
-        return $this->belongsTo(SeoVisitorSession::class, 'seo_visitor_session_id');
+        return $this->belongsTo(SeoVisitorSession::class, SeoSchema::sessionFk('seo_events'));
     }
 
     public function pageView(): BelongsTo
     {
-        return $this->belongsTo(SeoPageView::class, 'seo_page_view_id');
+        return $this->belongsTo(SeoPageView::class, SeoSchema::pageViewFk());
     }
 
     public function getTargetUrlAttribute()

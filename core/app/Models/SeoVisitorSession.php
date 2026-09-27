@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Support\Seo\SeoSchema;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
@@ -18,47 +19,48 @@ class SeoVisitorSession extends Model
         'engaged_seconds'  => 'int',
         'is_bounce'        => 'bool',
         'started_at'       => 'datetime',
+        'first_seen_at'    => 'datetime',
         'last_seen_at'     => 'datetime',
     ];
 
     public function pageViews(): HasMany
     {
-        return $this->hasMany(SeoPageView::class, 'seo_visitor_session_id');
+        return $this->hasMany(SeoPageView::class, SeoSchema::sessionFk());
     }
 
     public function events(): HasMany
     {
-        return $this->hasMany(SeoEvent::class, 'seo_visitor_session_id');
+        return $this->hasMany(SeoEvent::class, SeoSchema::sessionFk('seo_events'));
     }
 
     public function getIpAttribute()
     {
-        return $this->attributes['ip_address'] ?? null;
+        return $this->attributes['ip_address'] ?? $this->attributes['ip'] ?? null;
     }
 
     public function getVisitorIdAttribute()
     {
-        return $this->attributes['visitor_key'] ?? null;
+        return $this->attributes['visitor_key'] ?? $this->attributes['visitor_id'] ?? null;
     }
 
     public function getLandingPageAttribute()
     {
-        return $this->attributes['landing_path'] ?? null;
+        return $this->attributes['landing_path'] ?? $this->attributes['landing_page'] ?? null;
     }
 
     public function getExitPageAttribute()
     {
-        return $this->attributes['exit_path'] ?? null;
+        return $this->attributes['exit_path'] ?? $this->attributes['exit_page'] ?? null;
     }
 
     public function getPageViewsAttribute()
     {
-        return $this->attributes['page_count'] ?? 0;
+        return $this->attributes['page_count'] ?? $this->attributes['page_views'] ?? 0;
     }
 
     public function getFirstSeenAtAttribute()
     {
-        return $this->started_at;
+        return $this->attributes['started_at'] ?? $this->attributes['first_seen_at'] ?? $this->created_at;
     }
 
     public function getCampaignAttribute()

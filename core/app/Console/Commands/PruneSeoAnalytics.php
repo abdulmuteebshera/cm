@@ -5,6 +5,7 @@ namespace App\Console\Commands;
 use App\Models\SeoEvent;
 use App\Models\SeoPageView;
 use App\Models\SeoVisitorSession;
+use App\Support\Seo\SeoSchema;
 use App\Support\Seo\SeoTracker;
 use Illuminate\Console\Command;
 
@@ -26,7 +27,7 @@ class PruneSeoAnalytics extends Command
 
         $events = SeoEvent::where('created_at', '<', $before)->delete();
         $views  = SeoPageView::where('entered_at', '<', $before)->delete();
-        $sessions = SeoVisitorSession::where('started_at', '<', $before)->delete();
+        $sessions = SeoVisitorSession::where(SeoSchema::sessionStart(), '<', $before)->delete();
 
         $this->info("Pruned {$sessions} sessions, {$views} page views, {$events} events older than {$days} days.");
 

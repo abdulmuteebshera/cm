@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Support\Seo\SeoSchema;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -15,26 +16,27 @@ class SeoPageView extends Model
         'scroll_depth'     => 'int',
         'entered_at'       => 'datetime',
         'left_at'          => 'datetime',
+        'exited_at'        => 'datetime',
     ];
 
     public function session(): BelongsTo
     {
-        return $this->belongsTo(SeoVisitorSession::class, 'seo_visitor_session_id');
+        return $this->belongsTo(SeoVisitorSession::class, SeoSchema::sessionFk());
     }
 
     public function events(): HasMany
     {
-        return $this->hasMany(SeoEvent::class, 'seo_page_view_id');
+        return $this->hasMany(SeoEvent::class, SeoSchema::pageViewFk());
     }
 
     public function getTitleAttribute()
     {
-        return $this->attributes['page_title'] ?? null;
+        return $this->attributes['page_title'] ?? $this->attributes['title'] ?? null;
     }
 
     public function getExitedAtAttribute()
     {
-        return $this->left_at;
+        return $this->attributes['left_at'] ?? $this->attributes['exited_at'] ?? null;
     }
 
     public function getDurationLabelAttribute(): string

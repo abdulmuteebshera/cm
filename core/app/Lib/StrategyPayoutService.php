@@ -779,10 +779,9 @@ class StrategyPayoutService
 
         $items = PeriodPayoutItem::query()
             ->where('user_id', $userId)
+            ->where('status', PeriodPayoutItem::STATUS_APPROVED)
             ->whereHas('planPeriodReturn', function ($query) use ($year): void {
-                $query
-                    ->where('year', $year)
-                    ->where('payout_status', PlanPeriodReturn::STATUS_APPROVED);
+                $query->where('year', $year);
             })
             ->with(['planPeriodReturn.plan', 'invest'])
             ->get()
@@ -856,7 +855,9 @@ class StrategyPayoutService
             ->where('remark', 'interest')
             ->sum('amount');
 
-        $approvedAmount = (float) PeriodPayoutItem::where('user_id', $userId)->sum('amount');
+        $approvedAmount = (float) PeriodPayoutItem::where('user_id', $userId)
+            ->where('status', PeriodPayoutItem::STATUS_APPROVED)
+            ->sum('amount');
 
         $legacyAmount = round($totalInterest - $approvedAmount, 2);
 
@@ -883,6 +884,10 @@ class StrategyPayoutService
             $periodReturn->load(['payoutItems', 'plan']);
 
             foreach ($periodReturn->payoutItems as $item) {
+                if (!$item->isApproved()) {
+                    continue;
+                }
+
                 $user = User::find($item->user_id);
                 if ($user) {
                     $user->interest_wallet = max(0, (float) $user->interest_wallet - (float) $item->amount);
@@ -1214,10 +1219,10 @@ class StrategyPayoutService
 
         return PeriodPayoutItem::query()
             ->where('invest_id', $invest->id)
+            ->where('status', PeriodPayoutItem::STATUS_APPROVED)
             ->whereHas('planPeriodReturn', function ($query) use ($plan, $schedule): void {
                 $query
                     ->where('plan_id', $plan->id)
-                    ->where('payout_status', PlanPeriodReturn::STATUS_APPROVED)
                     ->whereDate('payout_date', $schedule['payout_date']->toDateString());
             })
             ->exists();
@@ -1436,16 +1441,15 @@ class StrategyPayoutService
         $record->save();
 
         if ($record->payout_status === PlanPeriodReturn::STATUS_PENDING) {
-            $preview = self::previewPeriodPayout($record);
+            $items = self::persistPendingPayoutItems($record);
 
-            if ($preview['count'] === 0) {
+            if ($items->isEmpty()) {
                 $record->delete();
 
                 return $record;
             }
 
-            $record->total_payout = $preview['total'];
-            $record->save();
+            self::refreshPeriodStatusFromItems($record);
         }
 
         return $record;
@@ -1468,9 +1472,21 @@ class StrategyPayoutService
         }
 
         foreach ($query->get() as $record) {
+            $hasDecided = $record->payoutItems()
+                ->whereIn('status', [
+                    PeriodPayoutItem::STATUS_APPROVED,
+                    PeriodPayoutItem::STATUS_REJECTED,
+                ])
+                ->exists();
+
+            if ($hasDecided) {
+                continue;
+            }
+
             $preview = self::previewPeriodPayout($record);
 
             if ($preview['count'] === 0) {
+                PeriodPayoutItem::where('plan_period_return_id', $record->id)->delete();
                 $record->delete();
                 $removed++;
             }
@@ -1819,6 +1835,13 @@ class StrategyPayoutService
         }
 
         $payoutDate = Carbon::parse($record->payout_date)->startOfDay();
+        $decidedInvestIds = PeriodPayoutItem::query()
+            ->where('plan_period_return_id', $record->id)
+            ->whereIn('status', [
+                PeriodPayoutItem::STATUS_APPROVED,
+                PeriodPayoutItem::STATUS_REJECTED,
+            ])
+            ->pluck('invest_id');
 
         $invests = Invest::with('user')
             ->where('plan_id', $record->plan_id)
@@ -1830,6 +1853,10 @@ class StrategyPayoutService
         $total = 0.0;
 
         foreach ($invests as $invest) {
+            if ($decidedInvestIds->contains($invest->id)) {
+                continue;
+            }
+
             $cycle = self::cycleIndexForPayoutDate($invest, $plan, $payoutDate);
 
             if ($cycle === null) {
@@ -1874,9 +1901,117 @@ class StrategyPayoutService
         ];
     }
 
+    public static function persistPendingPayoutItems(PlanPeriodReturn $record): Collection
+    {
+        $preview = self::previewPeriodPayout($record);
+        $existing = PeriodPayoutItem::query()
+            ->where('plan_period_return_id', $record->id)
+            ->get()
+            ->keyBy('invest_id');
+        $keepInvestIds = [];
+
+        foreach ($preview['lines'] as $line) {
+            /** @var Invest $invest */
+            $invest = $line['invest'];
+            $keepInvestIds[] = $invest->id;
+            $item = $existing->get($invest->id);
+            $calculated = (float) $line['amount'];
+
+            if ($item && $item->isFinalized()) {
+                continue;
+            }
+
+            $payload = [
+                'plan_period_return_id' => $record->id,
+                'user_id'               => (int) ($line['user']->id ?? $invest->user_id),
+                'invest_id'             => $invest->id,
+                'calculated_amount'     => $calculated,
+                'rate_percent'          => (float) ($line['rate_percent'] ?? $record->return_percent),
+                'status'                => PeriodPayoutItem::STATUS_PENDING,
+            ];
+
+            if (!$item) {
+                PeriodPayoutItem::create($payload + [
+                    'amount'        => $calculated,
+                    'amount_edited' => false,
+                ]);
+                continue;
+            }
+
+            $item->calculated_amount = $calculated;
+            $item->rate_percent      = (float) ($line['rate_percent'] ?? $record->return_percent);
+            $item->save();
+        }
+
+        $stale = PeriodPayoutItem::query()
+            ->where('plan_period_return_id', $record->id)
+            ->where('status', PeriodPayoutItem::STATUS_PENDING);
+
+        if ($keepInvestIds !== []) {
+            $stale->whereNotIn('invest_id', $keepInvestIds);
+        }
+
+        $stale->delete();
+
+        return PeriodPayoutItem::with(['user', 'invest'])
+            ->where('plan_period_return_id', $record->id)
+            ->orderByDesc('amount')
+            ->get();
+    }
+
+    public static function updatePayoutItemAmount(PeriodPayoutItem $item, float $amount): PeriodPayoutItem
+    {
+        if ($item->isApproved()) {
+            throw new RuntimeException('Approved client payouts cannot be edited.');
+        }
+
+        $item->amount        = $amount;
+        $item->amount_edited = abs($amount - (float) $item->calculated_amount) > 0.00000001;
+        $item->save();
+
+        if ($item->planPeriodReturn) {
+            self::refreshPeriodStatusFromItems($item->planPeriodReturn);
+        }
+
+        return $item->fresh(['user', 'invest', 'planPeriodReturn']);
+    }
+
+    public static function approvePayoutItem(PeriodPayoutItem $item, int $adminId = 0, ?float $amount = null): PeriodPayoutItem
+    {
+        return DB::transaction(function () use ($item, $adminId, $amount): PeriodPayoutItem {
+            return self::disbursePayoutItem($item->id, $adminId, $amount);
+        });
+    }
+
+    public static function rejectPayoutItem(PeriodPayoutItem $item, int $adminId = 0): PeriodPayoutItem
+    {
+        return DB::transaction(function () use ($item): PeriodPayoutItem {
+            $lockedItem = PeriodPayoutItem::query()->lockForUpdate()->findOrFail($item->id);
+
+            if ($lockedItem->isApproved()) {
+                throw new RuntimeException('Approved client payouts cannot be rejected.');
+            }
+
+            if ($lockedItem->isRejected()) {
+                return $lockedItem;
+            }
+
+            $lockedItem->status      = PeriodPayoutItem::STATUS_REJECTED;
+            $lockedItem->approved_at = null;
+            $lockedItem->save();
+
+            $record = PlanPeriodReturn::query()->lockForUpdate()->find($lockedItem->plan_period_return_id);
+            if ($record) {
+                self::refreshPeriodStatusFromItems($record);
+            }
+
+            return $lockedItem->fresh(['user', 'invest', 'planPeriodReturn']);
+        });
+    }
+
     public static function approvePeriodReturn(PlanPeriodReturn $record, int $adminId = 0): PlanPeriodReturn
     {
-        return DB::transaction(function () use ($record): PlanPeriodReturn {
+        return DB::transaction(function () use ($record, $adminId): PlanPeriodReturn {
             $lockedRecord = PlanPeriodReturn::query()
                 ->with('plan')
                 ->lockForUpdate()
@@ -1894,63 +2029,16 @@ class StrategyPayoutService
                 throw new RuntimeException('Period payout is available on the scheduled payout date.');
             }
 
-            $preview = self::previewPeriodPayout($lockedRecord);
-            $setting = gs();
-            $total   = 0.0;
+            self::persistPendingPayoutItems($lockedRecord);
 
-            PeriodPayoutItem::where('plan_period_return_id', $lockedRecord->id)->delete();
+            $pendingItems = PeriodPayoutItem::query()
+                ->where('plan_period_return_id', $lockedRecord->id)
+                ->where('status', PeriodPayoutItem::STATUS_PENDING)
+                ->get();
 
-            foreach ($preview['lines'] as $line) {
-                /** @var Invest $invest */
-                $invest = $line['invest'];
-                $user   = $line['user'];
-                $amount = (float) $line['amount'];
-
-                if (!$user || $amount == 0.0) {
-                    continue;
-                }
-
-                $user->interest_wallet += $amount;
-                $user->save();
-
-                $trx = getTrx();
-
-                $transaction               = new Transaction();
-                $transaction->user_id      = $user->id;
-                $transaction->invest_id    = $invest->id;
-                $transaction->amount       = $amount;
-                $transaction->charge       = 0;
-                $transaction->post_balance = $user->interest_wallet;
-                $transaction->trx_type     = $amount >= 0 ? '+' : '-';
-                $transaction->trx          = $trx;
-                $transaction->wallet_type  = 'interest_wallet';
-                $transaction->remark       = 'strategy_period_payout';
-                $transaction->details      = showAmount($amount) . ' ' . $setting->cur_text . ' period payout from ' . $lockedRecord->plan->name . ' (' . $lockedRecord->periodLabel() . ')';
-                $transaction->save();
-
-                PeriodPayoutItem::create([
-                    'plan_period_return_id' => $lockedRecord->id,
-                    'user_id'               => $user->id,
-                    'invest_id'             => $invest->id,
-                    'transaction_id'        => $transaction->id,
-                    'amount'                => $amount,
-                    'rate_percent'          => (float) ($line['rate_percent'] ?? $lockedRecord->return_percent),
-                ]);
-
-                if ($amount > 0 && (int) ($setting->invest_return_commission ?? 0) === 1) {
-                    HyipLab::levelCommission($user, $amount, 'invest_return_commission', $trx, $setting);
-                }
-
-                $invest->paid += $amount;
-                self::advanceInvestAfterPayout($invest, $lockedRecord->plan);
-
-                $total += $amount;
+            foreach ($pendingItems as $item) {
+                self::disbursePayoutItem($item->id, $adminId);
             }
-
-            $lockedRecord->payout_status = PlanPeriodReturn::STATUS_APPROVED;
-            $lockedRecord->approved_at   = now();
-            $lockedRecord->total_payout  = round($total, 8);
-            $lockedRecord->save();
 
             return $lockedRecord->fresh(['plan', 'payoutItems.user', 'payoutItems.invest']);
         });
@@ -1958,16 +2046,144 @@ class StrategyPayoutService
 
     public static function rejectPeriodReturn(PlanPeriodReturn $record, int $adminId = 0): PlanPeriodReturn
     {
-        if ($record->payout_status === PlanPeriodReturn::STATUS_APPROVED) {
-            throw new RuntimeException('Approved period returns cannot be rejected.');
+        return DB::transaction(function () use ($record): PlanPeriodReturn {
+            $lockedRecord = PlanPeriodReturn::query()->lockForUpdate()->findOrFail($record->id);
+
+            if ($lockedRecord->payout_status === PlanPeriodReturn::STATUS_APPROVED && !$lockedRecord->pendingPayoutItems()->exists()) {
+                throw new RuntimeException('Approved period returns cannot be rejected.');
+            }
+
+            PeriodPayoutItem::query()
+                ->where('plan_period_return_id', $lockedRecord->id)
+                ->where('status', PeriodPayoutItem::STATUS_PENDING)
+                ->update([
+                    'status'      => PeriodPayoutItem::STATUS_REJECTED,
+                    'approved_at' => null,
+                ]);
+
+            self::refreshPeriodStatusFromItems($lockedRecord);
+
+            return $lockedRecord->fresh(['plan', 'payoutItems.user', 'payoutItems.invest']);
+        });
+    }
+
+    public static function refreshPeriodStatusFromItems(PlanPeriodReturn $record): PlanPeriodReturn
+    {
+        $items = PeriodPayoutItem::query()
+            ->where('plan_period_return_id', $record->id)
+            ->get();
+
+        $approved = $items->where('status', PeriodPayoutItem::STATUS_APPROVED);
+        $pending  = $items->where('status', PeriodPayoutItem::STATUS_PENDING);
+        $rejected = $items->where('status', PeriodPayoutItem::STATUS_REJECTED);
+
+        if ($pending->isNotEmpty()) {
+            $record->payout_status = PlanPeriodReturn::STATUS_PENDING;
+            $record->approved_at   = null;
+            $record->total_payout  = round((float) $approved->sum('amount') + (float) $pending->sum('amount'), 8);
+            $record->save();
+
+            return $record;
         }
 
-        $record->payout_status = PlanPeriodReturn::STATUS_REJECTED;
-        $record->approved_at   = null;
+        if ($approved->isNotEmpty()) {
+            $record->payout_status = PlanPeriodReturn::STATUS_APPROVED;
+            $record->approved_at   = $record->approved_at ?? now();
+            $record->total_payout  = round((float) $approved->sum('amount'), 8);
+            $record->save();
+
+            return $record;
+        }
+
+        if ($rejected->isNotEmpty()) {
+            $record->payout_status = PlanPeriodReturn::STATUS_REJECTED;
+            $record->approved_at   = null;
+            $record->total_payout  = 0;
+            $record->save();
+
+            return $record;
+        }
+
+        $record->payout_status = PlanPeriodReturn::STATUS_PENDING;
         $record->total_payout  = 0;
         $record->save();
 
         return $record;
+    }
+
+    protected static function disbursePayoutItem(int $itemId, int $adminId = 0, ?float $amount = null): PeriodPayoutItem
+    {
+        $item = PeriodPayoutItem::query()->lockForUpdate()->findOrFail($itemId);
+        $record = PlanPeriodReturn::query()
+            ->with('plan')
+            ->lockForUpdate()
+            ->findOrFail($item->plan_period_return_id);
+
+        if ($item->isApproved()) {
+            return $item;
+        }
+
+        if (!self::isPayoutEnterable($record->payout_date ?? self::periodPayoutDate($record->period_end))) {
+            throw new RuntimeException('Period payout is available on the scheduled payout date.');
+        }
+
+        $payAmount = $amount !== null ? (float) $amount : (float) $item->amount;
+
+        if ($amount !== null) {
+            $item->amount        = $payAmount;
+            $item->amount_edited = abs($payAmount - (float) $item->calculated_amount) > 0.00000001;
+        }
+
+        $user   = User::query()->lockForUpdate()->find($item->user_id);
+        $invest = Invest::query()->lockForUpdate()->find($item->invest_id);
+        $setting = gs();
+
+        if ($user && $payAmount != 0.0) {
+            $user->interest_wallet += $payAmount;
+            $user->save();
+
+            $trx = getTrx();
+
+            $transaction               = new Transaction();
+            $transaction->user_id      = $user->id;
+            $transaction->invest_id    = $invest?->id;
+            $transaction->amount       = $payAmount;
+            $transaction->charge       = 0;
+            $transaction->post_balance = $user->interest_wallet;
+            $transaction->trx_type     = $payAmount >= 0 ? '+' : '-';
+            $transaction->trx          = $trx;
+            $transaction->wallet_type  = 'interest_wallet';
+            $transaction->remark       = 'strategy_period_payout';
+            $transaction->details      = showAmount($payAmount) . ' ' . $setting->cur_text . ' period payout from ' . $record->plan->name . ' (' . $record->periodLabel() . ')';
+            $transaction->save();
+
+            $item->transaction_id = $transaction->id;
+
+            if ($payAmount > 0 && (int) ($setting->invest_return_commission ?? 0) === 1) {
+                HyipLab::levelCommission($user, $payAmount, 'invest_return_commission', $trx, $setting);
+            }
+        }
+
+        if ($invest && $record->plan) {
+            if ($payAmount != 0.0) {
+                $invest->paid += $payAmount;
+            }
+            self::advanceInvestAfterPayout($invest, $record->plan);
+        }
+
+        $item->status      = PeriodPayoutItem::STATUS_APPROVED;
+        $item->approved_by = $adminId ?: null;
+        $item->approved_at = now();
+        $item->save();
+
+        if ($record->payout_status === PlanPeriodReturn::STATUS_REJECTED) {
+            $record->payout_status = PlanPeriodReturn::STATUS_PENDING;
+            $record->save();
+        }
+
+        self::refreshPeriodStatusFromItems($record);
+
+        return $item->fresh(['user', 'invest', 'planPeriodReturn']);
     }
 
     public static function pendingWeeklyCount(?Plan $plan = null): int
@@ -2003,10 +2219,9 @@ class StrategyPayoutService
 
         $items = PeriodPayoutItem::query()
             ->where('user_id', $userId)
+            ->where('status', PeriodPayoutItem::STATUS_APPROVED)
             ->whereHas('planPeriodReturn', function ($query) use ($targetYear): void {
-                $query
-                    ->where('year', $targetYear)
-                    ->where('payout_status', PlanPeriodReturn::STATUS_APPROVED);
+                $query->where('year', $targetYear);
             })
             ->with('planPeriodReturn')
             ->get();
@@ -2067,10 +2282,9 @@ class StrategyPayoutService
         if ($userId > 0) {
             $items = PeriodPayoutItem::query()
                 ->where('user_id', $userId)
+                ->where('status', PeriodPayoutItem::STATUS_APPROVED)
                 ->whereHas('planPeriodReturn', function ($query) use ($targetYear): void {
-                    $query
-                        ->where('year', $targetYear)
-                        ->where('payout_status', PlanPeriodReturn::STATUS_APPROVED);
+                    $query->where('year', $targetYear);
                 })
                 ->with('planPeriodReturn')
                 ->get();

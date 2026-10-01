@@ -39,9 +39,10 @@ class AnnouncementController extends Controller
 
     private function submitData(Announcement $announcement, Request $request): void
     {
-        $announcement->title   = $request->title;
-        $announcement->content = $request->content;
-        $announcement->status  = $request->status ? 1 : 0;
+        $announcement->title             = $request->title;
+        $announcement->content           = $request->content;
+        $announcement->status            = $request->status ? 1 : 0;
+        $announcement->show_on_dashboard = $request->boolean('show_on_dashboard') ? 1 : 0;
         $announcement->save();
     }
 
@@ -50,7 +51,8 @@ class AnnouncementController extends Controller
         $this->validate($request, [
             'title'   => 'required|string|max:255',
             'content' => 'required|string',
-            'status'  => 'nullable|in:0,1',
+            'status'            => 'nullable|in:0,1',
+            'show_on_dashboard' => 'nullable|in:0,1',
         ]);
     }
 

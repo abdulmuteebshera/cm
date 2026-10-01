@@ -26,7 +26,7 @@
                         </div>
                     </div>
                     <div class="announcement-item__body">
-                        {!! nl2br(e($announcement->content)) !!}
+                        {!! $announcement->formattedContent() !!}
                     </div>
                 </div>
             </div>
@@ -102,6 +102,10 @@
         font-size: 0.9rem;
         line-height: 1.7;
         padding-left: 58px;
+    }
+    .announcement-item__body strong {
+        color: #0f172a;
+        font-weight: 700;
     }
     .announcement-empty {
         display: flex;

@@ -32,6 +32,16 @@ class PlanPeriodReturn extends Model
         return $this->hasMany(PeriodPayoutItem::class, 'plan_period_return_id');
     }
 
+    public function pendingPayoutItems()
+    {
+        return $this->payoutItems()->where('status', PeriodPayoutItem::STATUS_PENDING);
+    }
+
+    public function approvedPayoutItems()
+    {
+        return $this->payoutItems()->where('status', PeriodPayoutItem::STATUS_APPROVED);
+    }
+
     public function periodLabel(): string
     {
         if ($this->payout_date) {
@@ -46,6 +56,19 @@ class PlanPeriodReturn extends Model
     public function isApprovable(): bool
     {
         return $this->payout_status === self::STATUS_PENDING;
+    }
+
+    public function hasPendingItems(): bool
+    {
+        return $this->payoutItems->contains(fn (PeriodPayoutItem $item) => $item->isPending());
+    }
+
+    public function isPartiallyDisbursed(): bool
+    {
+        $items = $this->relationLoaded('payoutItems') ? $this->payoutItems : $this->payoutItems()->get();
+
+        return $items->contains(fn (PeriodPayoutItem $item) => $item->isApproved())
+            && $items->contains(fn (PeriodPayoutItem $item) => $item->isPending());
     }
 
     public function scopePending($query)

@@ -77,6 +77,9 @@ Route::middleware(['admin', 'crm.admin.scope'])->group(function () {
         Route::get('payout/{id}', 'payoutDetails')->name('payout.details');
         Route::post('period-return/{id}/approve', 'approvePeriodReturn')->name('period.approve');
         Route::post('period-return/{id}/reject', 'rejectPeriodReturn')->name('period.reject');
+        Route::post('payout-item/{id}/amount', 'updatePayoutItemAmount')->name('payout.item.amount');
+        Route::post('payout-item/{id}/approve', 'approvePayoutItem')->name('payout.item.approve');
+        Route::post('payout-item/{id}/reject', 'rejectPayoutItem')->name('payout.item.reject');
         Route::get('{planId}/period-returns', 'periodReturns')->name('period.returns');
         Route::post('{planId}/period-returns', 'savePeriodReturns')->name('period.returns.save');
         Route::get('{planId}/weekly-returns', 'weeklyReturns')->name('weekly.returns');

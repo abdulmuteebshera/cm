@@ -5,10 +5,12 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Lib\StrategyPayoutService;
 use App\Models\Plan;
+use App\Models\PeriodPayoutItem;
 use App\Models\PlanPeriodReturn;
 use App\Models\PlanMonthlyReturn;
 use App\Models\PlanWeeklyReturn;
 use Illuminate\Http\Request;
+use RuntimeException;
 
 class StrategyController extends Controller
 {
@@ -223,18 +225,84 @@ class StrategyController extends Controller
     public function approvePeriodReturn($id)
     {
         $record = PlanPeriodReturn::with('plan')->findOrFail($id);
-        StrategyPayoutService::approvePeriodReturn($record, auth('admin')->id());
 
-        $notify[] = ['success', $record->periodLabel() . ' payout approved and credited to investors'];
+        try {
+            StrategyPayoutService::approvePeriodReturn($record, auth('admin')->id());
+            $notify[] = ['success', $record->periodLabel() . ' remaining clients disbursed'];
+        } catch (RuntimeException $e) {
+            $notify[] = ['error', $e->getMessage()];
+        }
+
         return back()->withNotify($notify);
     }
 
     public function rejectPeriodReturn($id)
     {
         $record = PlanPeriodReturn::findOrFail($id);
-        StrategyPayoutService::rejectPeriodReturn($record, auth('admin')->id());
 
-        $notify[] = ['success', 'Period return rejected'];
+        try {
+            StrategyPayoutService::rejectPeriodReturn($record, auth('admin')->id());
+            $notify[] = ['success', 'Remaining client payouts rejected'];
+        } catch (RuntimeException $e) {
+            $notify[] = ['error', $e->getMessage()];
+        }
+
+        return back()->withNotify($notify);
+    }
+
+    public function updatePayoutItemAmount(Request $request, $id)
+    {
+        $item = PeriodPayoutItem::findOrFail($id);
+
+        $request->validate([
+            'amount' => 'required|numeric',
+        ]);
+
+        try {
+            StrategyPayoutService::updatePayoutItemAmount($item, (float) $request->amount);
+            $notify[] = ['success', 'Client payout amount updated'];
+        } catch (RuntimeException $e) {
+            $notify[] = ['error', $e->getMessage()];
+        }
+
+        return back()->withNotify($notify);
+    }
+
+    public function approvePayoutItem(Request $request, $id)
+    {
+        $item = PeriodPayoutItem::with(['user', 'planPeriodReturn'])->findOrFail($id);
+
+        $request->validate([
+            'amount' => 'nullable|numeric',
+        ]);
+
+        try {
+            StrategyPayoutService::approvePayoutItem(
+                $item,
+                auth('admin')->id(),
+                $request->filled('amount') ? (float) $request->amount : null
+            );
+            $name = $item->user?->fullname ?: ($item->user?->username ?? 'Client');
+            $notify[] = ['success', $name . ' payout approved and disbursed'];
+        } catch (RuntimeException $e) {
+            $notify[] = ['error', $e->getMessage()];
+        }
+
+        return back()->withNotify($notify);
+    }
+
+    public function rejectPayoutItem($id)
+    {
+        $item = PeriodPayoutItem::with('user')->findOrFail($id);
+
+        try {
+            StrategyPayoutService::rejectPayoutItem($item, auth('admin')->id());
+            $name = $item->user?->fullname ?: ($item->user?->username ?? 'Client');
+            $notify[] = ['success', $name . ' payout rejected'];
+        } catch (RuntimeException $e) {
+            $notify[] = ['error', $e->getMessage()];
+        }
+
         return back()->withNotify($notify);
     }
 
@@ -245,7 +313,7 @@ class StrategyController extends Controller
         $pageTitle = 'Strategy Payout Approvals';
         $status    = request('status', 'pending');
 
-        $periodReturns = PlanPeriodReturn::with('plan')
+        $periodReturns = PlanPeriodReturn::with(['plan', 'payoutItems'])
             ->when($status === 'pending', fn ($q) => $q->where('total_payout', '>', 0))
             ->when($status !== 'all' && $status !== 'pending', fn ($q) => $q->where('payout_status', $status))
             ->when($status === 'pending', fn ($q) => $q->where('payout_status', PlanPeriodReturn::STATUS_PENDING))
@@ -271,10 +339,19 @@ class StrategyController extends Controller
             $record->refresh();
         }
 
+        if ($record->exists && $record->payout_status !== PlanPeriodReturn::STATUS_APPROVED) {
+            StrategyPayoutService::persistPendingPayoutItems($record);
+            $record->refresh();
+        }
+
+        $record->load(['plan', 'payoutItems.user', 'payoutItems.invest']);
+
         $pageTitle = $record->periodLabel() . ' — ' . $record->plan->name;
-        $preview   = $record->isApprovable()
-            ? StrategyPayoutService::previewPeriodPayout($record)
-            : ['total' => $record->total_payout, 'lines' => [], 'count' => $record->payoutItems->count()];
+        $preview   = [
+            'total' => $record->total_payout,
+            'lines' => [],
+            'count' => $record->payoutItems->count(),
+        ];
         $weeklyBreakdown = StrategyPayoutService::periodWeeklyBreakdown($record);
 
         return view('admin.strategy.payout_details', compact('pageTitle', 'record', 'preview', 'weeklyBreakdown'));

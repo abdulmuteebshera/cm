@@ -33,7 +33,10 @@
                                             @endif
                                         </td>
                                         <td>
-                                            @if($row->payout_status === 'pending')
+                                            @if($row->isPartiallyDisbursed())
+                                                <span class="badge badge--info">@lang('Partial')</span>
+                                                <small class="d-block text-muted">{{ $row->payoutItems->where('status', 'approved')->count() }}/{{ $row->payoutItems->count() }} @lang('disbursed')</small>
+                                            @elseif($row->payout_status === 'pending')
                                                 <span class="badge badge--warning">@lang('Pending')</span>
                                             @elseif($row->payout_status === 'approved')
                                                 <span class="badge badge--success">@lang('Approved')</span>
@@ -48,7 +51,7 @@
                                             @if($row->isApprovable())
                                                 <form action="{{ route('admin.strategy.period.approve', $row->id) }}" method="post" class="d-inline">
                                                     @csrf
-                                                    <button type="submit" class="btn btn-sm btn-outline--success confirmationBtn" data-question="@lang('Approve this period payout and credit investors?')"><i class="las la-check"></i></button>
+                                                    <button type="submit" class="btn btn-sm btn-outline--success confirmationBtn" data-question="@lang('Disburse every remaining pending client?')"><i class="las la-check"></i></button>
                                                 </form>
                                             @endif
                                         </td>

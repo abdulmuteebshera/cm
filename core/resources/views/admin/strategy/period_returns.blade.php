@@ -38,7 +38,7 @@
                                     @elseif($status === 'pending')
                                         <span class="badge badge--warning mb-2">@lang('Pending Approval')</span>
                                         <small class="d-block text-muted mb-2">@lang('Est. payout'): {{ $general->cur_sym }}{{ showAmount($record->total_payout) }}</small>
-                                        <a href="{{ route('admin.strategy.payout.details', $record->id) }}" class="btn btn--primary btn-sm w-100">@lang('Review & Approve')</a>
+                                        <a href="{{ route('admin.strategy.payout.details', $record->id) }}" class="btn btn--primary btn-sm w-100">@lang('Review Clients')</a>
                                     @elseif($status === 'rejected')
                                         <span class="badge badge--danger mb-2">@lang('Rejected')</span>
                                     @else

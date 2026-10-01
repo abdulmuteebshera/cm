@@ -10,6 +10,7 @@
                                 <tr>
                                     <th>@lang('Title')</th>
                                     <th>@lang('Message')</th>
+                                    <th>@lang('Dashboard')</th>
                                     <th>@lang('Status')</th>
                                     <th>@lang('Created')</th>
                                     <th>@lang('Action')</th>
@@ -20,6 +21,13 @@
                                     <tr>
                                         <td>{{ __($announcement->title) }}</td>
                                         <td>{{ strLimit(strip_tags($announcement->content), 60) }}</td>
+                                        <td>
+                                            @if($announcement->show_on_dashboard)
+                                                <span class="badge badge--info">@lang('Shown')</span>
+                                            @else
+                                                <span class="badge badge--dark">@lang('Hidden')</span>
+                                            @endif
+                                        </td>
                                         <td>{!! $announcement->statusBadge !!}</td>
                                         <td>{{ showDateTime($announcement->created_at, 'd M Y') }}</td>
                                         <td>
@@ -30,6 +38,7 @@
                                                 data-title="{{ $announcement->title }}"
                                                 data-content="{{ $announcement->content }}"
                                                 data-status="{{ $announcement->status }}"
+                                                data-dashboard="{{ $announcement->show_on_dashboard }}"
                                                 data-route="{{ route('admin.announcement.update', $announcement->id) }}">
                                                 <i class="las la-pen"></i>@lang('Edit')
                                             </button>
@@ -61,7 +70,7 @@
 
     {{-- Create modal --}}
     <div class="modal fade" id="addModal">
-        <div class="modal-dialog">
+        <div class="modal-dialog modal-lg">
             <div class="modal-content">
                 <div class="modal-header">
                     <h4 class="modal-title">@lang('New Announcement')</h4>
@@ -76,13 +85,21 @@
                         </div>
                         <div class="form-group">
                             <label>@lang('Message')</label>
-                            <textarea class="form-control" name="content" rows="5" required></textarea>
+                            <textarea class="form-control" name="content" rows="12" required></textarea>
+                            <small class="text-muted">@lang('Use **text** to make words bold. Line breaks are kept.')</small>
                         </div>
                         <div class="form-group">
                             <label>@lang('Status')</label>
                             <select name="status" class="form-control">
-                                <option value="1">@lang('Active')</option>
-                                <option value="0">@lang('Inactive')</option>
+                                <option value="1">@lang('Enabled')</option>
+                                <option value="0">@lang('Disabled')</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>@lang('Show on investor dashboard')</label>
+                            <select name="show_on_dashboard" class="form-control">
+                                <option value="1">@lang('Yes')</option>
+                                <option value="0">@lang('No — announcements page only')</option>
                             </select>
                         </div>
                     </div>
@@ -96,7 +113,7 @@
 
     {{-- Edit modal --}}
     <div class="modal fade" id="editModal">
-        <div class="modal-dialog">
+        <div class="modal-dialog modal-lg">
             <div class="modal-content">
                 <div class="modal-header">
                     <h4 class="modal-title">@lang('Edit Announcement')</h4>
@@ -111,13 +128,21 @@
                         </div>
                         <div class="form-group">
                             <label>@lang('Message')</label>
-                            <textarea class="form-control" name="content" rows="5" required></textarea>
+                            <textarea class="form-control" name="content" rows="12" required></textarea>
+                            <small class="text-muted">@lang('Use **text** to make words bold. Line breaks are kept.')</small>
                         </div>
                         <div class="form-group">
                             <label>@lang('Status')</label>
                             <select name="status" class="form-control">
-                                <option value="1">@lang('Active')</option>
-                                <option value="0">@lang('Inactive')</option>
+                                <option value="1">@lang('Enabled')</option>
+                                <option value="0">@lang('Disabled')</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>@lang('Show on investor dashboard')</label>
+                            <select name="show_on_dashboard" class="form-control">
+                                <option value="1">@lang('Yes')</option>
+                                <option value="0">@lang('No — announcements page only')</option>
                             </select>
                         </div>
                     </div>
@@ -146,6 +171,7 @@
                 modal.find('input[name=title]').val($(this).data('title'));
                 modal.find('textarea[name=content]').val($(this).data('content'));
                 modal.find('select[name=status]').val($(this).data('status').toString());
+                modal.find('select[name=show_on_dashboard]').val(($(this).data('dashboard') || 0).toString());
             });
         })(jQuery);
     </script>

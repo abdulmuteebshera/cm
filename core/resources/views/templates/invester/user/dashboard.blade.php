@@ -8,6 +8,23 @@
 
 <div class="dashboard-inner quant-dashboard">
 
+    @if(!empty($dashboardAnnouncements) && $dashboardAnnouncements->count())
+        <div class="quant-notice-stack">
+            @foreach($dashboardAnnouncements as $notice)
+                <article class="quant-notice">
+                    <div class="quant-notice__ribbon">
+                        <span class="quant-notice__badge"><i class="las la-exclamation-circle"></i> @lang('Important Update')</span>
+                        <span class="quant-notice__date">{{ showDateTime($notice->created_at, 'M d, Y') }}</span>
+                    </div>
+                    <h3 class="quant-notice__title">{{ $notice->title }}</h3>
+                    <div class="quant-notice__body">
+                        {!! $notice->formattedContent() !!}
+                    </div>
+                </article>
+            @endforeach
+        </div>
+    @endif
+
     {{-- Header --}}
     <div class="quant-header">
         <div class="quant-header__main">
@@ -457,6 +474,112 @@
 
 @push('style')
 <style>
+    .quant-notice-stack {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        margin: 0 0 24px;
+        width: 100%;
+        min-width: 0;
+    }
+    .quant-notice {
+        position: relative;
+        width: 100%;
+        max-width: 100%;
+        box-sizing: border-box;
+        border-radius: 12px;
+        padding: 16px 18px 18px 20px;
+        background: #fffdf6;
+        border: 1px solid #f3e6c3;
+        border-left: 4px solid #d4a017;
+        box-shadow: none;
+    }
+    .quant-notice__ribbon {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 8px 12px;
+        margin-bottom: 8px;
+    }
+    .quant-notice__badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 4px 10px;
+        border-radius: 6px;
+        background: #fff7df;
+        color: #9a7b12;
+        font-size: 0.7rem;
+        font-weight: 700;
+        letter-spacing: 0.05em;
+        text-transform: uppercase;
+        white-space: nowrap;
+    }
+    .quant-notice__date {
+        font-size: 0.75rem;
+        color: #94a3b8;
+        font-weight: 600;
+    }
+    .quant-notice__title {
+        margin: 0 0 10px;
+        font-family: "Maven Pro", sans-serif;
+        font-size: 1.15rem;
+        font-weight: 700;
+        color: #1e293b;
+        line-height: 1.35;
+        overflow-wrap: anywhere;
+        word-break: break-word;
+    }
+    .quant-notice__body {
+        color: #475569;
+        font-size: 0.9rem;
+        line-height: 1.7;
+        overflow-wrap: anywhere;
+        word-break: break-word;
+    }
+    .quant-notice__body p {
+        margin: 0 0 0.7em;
+    }
+    .quant-notice__body p:last-child {
+        margin-bottom: 0;
+    }
+    .quant-notice__body strong {
+        color: #1e293b;
+        font-weight: 700;
+    }
+    @media (max-width: 767px) {
+        .quant-notice {
+            padding: 14px 14px 16px 16px;
+            border-radius: 10px;
+        }
+        .quant-notice__title {
+            font-size: 1.02rem;
+        }
+        .quant-notice__body {
+            font-size: 0.86rem;
+            line-height: 1.65;
+        }
+    }
+    @media (max-width: 480px) {
+        .quant-notice-stack {
+            margin-bottom: 18px;
+        }
+        .quant-notice__ribbon {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+        .quant-notice__badge {
+            font-size: 0.65rem;
+            padding: 4px 8px;
+        }
+        .quant-notice__title {
+            font-size: 0.98rem;
+        }
+        .quant-notice__body {
+            font-size: 0.84rem;
+        }
+    }
     .quant-header {
         align-items: flex-start;
     }

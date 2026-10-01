@@ -6,11 +6,18 @@ use Illuminate\Database\Eloquent\Model;
 
 class PeriodPayoutItem extends Model
 {
+    public const STATUS_PENDING  = 'pending';
+    public const STATUS_APPROVED = 'approved';
+    public const STATUS_REJECTED = 'rejected';
+
     protected $guarded = ['id'];
 
     protected $casts = [
-        'amount'       => 'float',
-        'rate_percent' => 'float',
+        'amount'            => 'float',
+        'calculated_amount' => 'float',
+        'rate_percent'      => 'float',
+        'amount_edited'     => 'boolean',
+        'approved_at'       => 'datetime',
     ];
 
     public function planPeriodReturn()
@@ -31,5 +38,35 @@ class PeriodPayoutItem extends Model
     public function transaction()
     {
         return $this->belongsTo(Transaction::class);
+    }
+
+    public function isPending(): bool
+    {
+        return $this->status === self::STATUS_PENDING;
+    }
+
+    public function isApproved(): bool
+    {
+        return $this->status === self::STATUS_APPROVED;
+    }
+
+    public function isRejected(): bool
+    {
+        return $this->status === self::STATUS_REJECTED;
+    }
+
+    public function isFinalized(): bool
+    {
+        return $this->isApproved() || $this->isRejected();
+    }
+
+    public function scopeApproved($query)
+    {
+        return $query->where('status', self::STATUS_APPROVED);
+    }
+
+    public function scopePending($query)
+    {
+        return $query->where('status', self::STATUS_PENDING);
     }
 }

@@ -109,6 +109,7 @@ class UserController extends Controller
         $data['tierStanding'] = TierProgram::resolve((float) $data['totalInvest']);
 
         $data['allocations'] = \App\Models\PortfolioAllocation::where('status', 1)->ordered()->get();
+        $data['dashboardAnnouncements'] = Announcement::onDashboard()->orderByDesc('id')->get();
 
         return view($this->activeTemplate . 'user.dashboard', $data);
     }

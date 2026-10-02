@@ -46,8 +46,9 @@
                     @if($pendingCount > 0)
                         <form action="{{ route('admin.strategy.period.approve', $record->id) }}" method="post" class="mt-4">
                             @csrf
-                            <button type="submit" class="btn btn--success w-100 confirmationBtn" data-question="@lang('Disburse every remaining pending client using their saved amounts?')">@lang('Disburse Remaining Clients')</button>
+                            <button type="submit" class="btn btn--success w-100 confirmationBtn" data-question="@lang('Disburse every remaining pending client using their saved amounts and compound settings?')">@lang('Disburse Remaining Clients')</button>
                         </form>
+                        <p class="text-muted small mt-2 mb-0">@lang('Each pending client can be compounded or paid in cash. Save Amount stores the compound choice before a batch disburse.')</p>
                         <form action="{{ route('admin.strategy.period.reject', $record->id) }}" method="post" class="mt-2">
                             @csrf
                             <button type="submit" class="btn btn--danger w-100 confirmationBtn" data-question="@lang('Reject every remaining pending client? Already disbursed clients stay paid.')">@lang('Reject Remaining')</button>
@@ -66,7 +67,7 @@
                                     <th>@lang('Client')</th>
                                     <th>@lang('Invest Amount')</th>
                                     <th>@lang('Calculated')</th>
-                                    <th style="min-width: 220px;">@lang('Payout Amount')</th>
+                                    <th style="min-width: 240px;">@lang('Payout Amount')</th>
                                     <th>@lang('Status')</th>
                                     <th>@lang('Action')</th>
                                 </tr>
@@ -95,17 +96,28 @@
                                                             class="form-control payout-amount-input"
                                                             autocomplete="off">
                                                     </div>
+                                                    <input type="hidden" name="compound" value="0">
+                                                    <div class="form-check mt-2">
+                                                        <input class="form-check-input" type="checkbox" name="compound" value="1" id="compound-{{ $item->id }}" {{ $item->compounded ? 'checked' : '' }}>
+                                                        <label class="form-check-label" for="compound-{{ $item->id }}">@lang('Compound into investment')</label>
+                                                    </div>
                                                 </form>
                                             @else
                                                 <strong>{{ $general->cur_sym }}{{ showAmount($item->amount) }}</strong>
                                                 @if($item->amount_edited)
                                                     <small class="d-block text-muted">@lang('Edited')</small>
                                                 @endif
+                                                @if($item->isCompounded())
+                                                    <small class="d-block text--success">@lang('Compounded into investment')</small>
+                                                @endif
                                             @endif
                                         </td>
                                         <td>
                                             @if($item->isApproved())
                                                 <span class="badge badge--success">@lang('Disbursed')</span>
+                                                @if($item->isCompounded())
+                                                    <span class="badge badge--primary d-block mt-1">@lang('Compounded')</span>
+                                                @endif
                                             @elseif($item->isRejected())
                                                 <span class="badge badge--danger">@lang('Rejected')</span>
                                             @else
@@ -120,8 +132,9 @@
                                                     class="btn btn-sm btn-outline--info mb-1">@lang('Save Amount')</button>
                                                 <button type="submit"
                                                     form="{{ $formId }}"
-                                                    class="btn btn-sm btn-outline--success js-submit-payout mb-1"
-                                                    data-question="@lang('Approve and disburse the amount entered for this client?')">@lang('Approve')</button>
+                                                    class="btn btn-sm btn-outline--success js-submit-payout js-approve-payout mb-1"
+                                                    data-question="@lang('Approve and disburse this profit to the interest wallet?')"
+                                                    data-compound-question="@lang('Compound this profit into the investment? It will still be recorded as interest, and the amount will be added to the invested balance instead of the interest wallet.')">@lang('Approve')</button>
                                             @endif
                                             @if($item->isPending())
                                                 <form action="{{ route('admin.strategy.payout.item.reject', $item->id) }}" method="post" class="d-inline">
@@ -172,11 +185,17 @@
         $(document).on('click', '.js-submit-payout', function (e) {
             e.preventDefault();
             e.stopImmediatePropagation();
+            var form = this.form || document.getElementById($(this).attr('form'));
             var question = $(this).data('question') || 'Are you sure?';
+            if ($(this).hasClass('js-approve-payout') && form) {
+                var compound = form.querySelector('input[name="compound"][type="checkbox"]');
+                if (compound && compound.checked) {
+                    question = $(this).data('compound-question') || question;
+                }
+            }
             if (!window.confirm(question)) {
                 return;
             }
-            var form = this.form || document.getElementById($(this).attr('form'));
             if (form) {
                 form.submit();
             }

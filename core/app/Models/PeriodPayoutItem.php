@@ -17,6 +17,7 @@ class PeriodPayoutItem extends Model
         'calculated_amount' => 'float',
         'rate_percent'      => 'float',
         'amount_edited'     => 'boolean',
+        'compounded'        => 'boolean',
         'approved_at'       => 'datetime',
     ];
 
@@ -58,6 +59,11 @@ class PeriodPayoutItem extends Model
     public function isFinalized(): bool
     {
         return $this->isApproved() || $this->isRejected();
+    }
+
+    public function isCompounded(): bool
+    {
+        return (bool) $this->compounded;
     }
 
     public function scopeApproved($query)

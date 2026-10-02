@@ -255,11 +255,16 @@ class StrategyController extends Controller
         $item = PeriodPayoutItem::findOrFail($id);
 
         $request->validate([
-            'amount' => 'required|numeric',
+            'amount'    => 'required|numeric',
+            'compound'  => 'nullable',
         ]);
 
         try {
-            StrategyPayoutService::updatePayoutItemAmount($item, (float) $request->amount);
+            StrategyPayoutService::updatePayoutItemAmount(
+                $item,
+                (float) $request->amount,
+                $request->boolean('compound')
+            );
             $notify[] = ['success', 'Client payout amount updated'];
         } catch (RuntimeException $e) {
             $notify[] = ['error', $e->getMessage()];
@@ -273,17 +278,22 @@ class StrategyController extends Controller
         $item = PeriodPayoutItem::with(['user', 'planPeriodReturn'])->findOrFail($id);
 
         $request->validate([
-            'amount' => 'nullable|numeric',
+            'amount'   => 'nullable|numeric',
+            'compound' => 'nullable',
         ]);
 
         try {
+            $compound = $request->has('compound') ? $request->boolean('compound') : null;
             StrategyPayoutService::approvePayoutItem(
                 $item,
                 auth('admin')->id(),
-                $request->filled('amount') ? (float) $request->amount : null
+                $request->filled('amount') ? (float) $request->amount : null,
+                $compound
             );
             $name = $item->user?->fullname ?: ($item->user?->username ?? 'Client');
-            $notify[] = ['success', $name . ' payout approved and disbursed'];
+            $notify[] = ['success', $compound
+                ? $name . ' profit compounded into the investment'
+                : $name . ' payout approved and disbursed'];
         } catch (RuntimeException $e) {
             $notify[] = ['error', $e->getMessage()];
         }

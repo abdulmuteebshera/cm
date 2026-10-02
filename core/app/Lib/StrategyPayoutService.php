@@ -889,14 +889,21 @@ class StrategyPayoutService
                 }
 
                 $user = User::find($item->user_id);
-                if ($user) {
-                    $user->interest_wallet = max(0, (float) $user->interest_wallet - (float) $item->amount);
+                $invest = Invest::find($item->invest_id);
+                $payAmount = (float) $item->amount;
+
+                if ($item->isCompounded()) {
+                    if ($invest) {
+                        $invest->amount = max(0, (float) $invest->amount - $payAmount);
+                        $invest->net_interest = max(0, (float) $invest->net_interest - $payAmount);
+                    }
+                } elseif ($user) {
+                    $user->interest_wallet = max(0, (float) $user->interest_wallet - $payAmount);
                     $user->save();
                 }
 
-                $invest = Invest::find($item->invest_id);
                 if ($invest) {
-                    $invest->paid = max(0, (float) $invest->paid - (float) $item->amount);
+                    $invest->paid = max(0, (float) $invest->paid - $payAmount);
                     $invest->return_rec_time = max(0, (int) $invest->return_rec_time - 1);
                     self::syncInvestNextPayoutTime($invest, $periodReturn->plan);
                 }
@@ -1959,7 +1966,7 @@ class StrategyPayoutService
             ->get();
     }
 
-    public static function updatePayoutItemAmount(PeriodPayoutItem $item, float $amount): PeriodPayoutItem
+    public static function updatePayoutItemAmount(PeriodPayoutItem $item, float $amount, ?bool $compound = null): PeriodPayoutItem
     {
         if ($item->isApproved()) {
             throw new RuntimeException('Approved client payouts cannot be edited.');
@@ -1967,6 +1974,9 @@ class StrategyPayoutService
 
         $item->amount        = $amount;
         $item->amount_edited = abs($amount - (float) $item->calculated_amount) > 0.00000001;
+        if ($compound !== null) {
+            $item->compounded = $compound;
+        }
         $item->save();
 
         if ($item->planPeriodReturn) {
@@ -1976,10 +1986,10 @@ class StrategyPayoutService
         return $item->fresh(['user', 'invest', 'planPeriodReturn']);
     }
 
-    public static function approvePayoutItem(PeriodPayoutItem $item, int $adminId = 0, ?float $amount = null): PeriodPayoutItem
+    public static function approvePayoutItem(PeriodPayoutItem $item, int $adminId = 0, ?float $amount = null, ?bool $compound = null): PeriodPayoutItem
     {
-        return DB::transaction(function () use ($item, $adminId, $amount): PeriodPayoutItem {
-            return self::disbursePayoutItem($item->id, $adminId, $amount);
+        return DB::transaction(function () use ($item, $adminId, $amount, $compound): PeriodPayoutItem {
+            return self::disbursePayoutItem($item->id, $adminId, $amount, $compound);
         });
     }
 
@@ -2111,7 +2121,7 @@ class StrategyPayoutService
         return $record;
     }
 
-    protected static function disbursePayoutItem(int $itemId, int $adminId = 0, ?float $amount = null): PeriodPayoutItem
+    protected static function disbursePayoutItem(int $itemId, int $adminId = 0, ?float $amount = null, ?bool $compound = null): PeriodPayoutItem
     {
         $item = PeriodPayoutItem::query()->lockForUpdate()->findOrFail($itemId);
         $record = PlanPeriodReturn::query()
@@ -2134,28 +2144,53 @@ class StrategyPayoutService
             $item->amount_edited = abs($payAmount - (float) $item->calculated_amount) > 0.00000001;
         }
 
+        if ($compound !== null) {
+            $item->compounded = $compound;
+        }
+
+        $compoundIntoInvest = (bool) $item->compounded;
         $user   = User::query()->lockForUpdate()->find($item->user_id);
         $invest = Invest::query()->lockForUpdate()->find($item->invest_id);
         $setting = gs();
+        $periodLabel = $record->periodLabel();
+        $planName = $record->plan->name ?? 'strategy';
 
         if ($user && $payAmount != 0.0) {
-            $user->interest_wallet += $payAmount;
-            $user->save();
-
             $trx = getTrx();
 
-            $transaction               = new Transaction();
-            $transaction->user_id      = $user->id;
-            $transaction->invest_id    = $invest?->id;
-            $transaction->amount       = $payAmount;
-            $transaction->charge       = 0;
-            $transaction->post_balance = $user->interest_wallet;
-            $transaction->trx_type     = $payAmount >= 0 ? '+' : '-';
-            $transaction->trx          = $trx;
-            $transaction->wallet_type  = 'interest_wallet';
-            $transaction->remark       = 'strategy_period_payout';
-            $transaction->details      = showAmount($payAmount) . ' ' . $setting->cur_text . ' period payout from ' . $record->plan->name . ' (' . $record->periodLabel() . ')';
-            $transaction->save();
+            if ($compoundIntoInvest && $invest) {
+                $invest->amount += $payAmount;
+                $invest->net_interest += $payAmount;
+
+                $transaction               = new Transaction();
+                $transaction->user_id      = $user->id;
+                $transaction->invest_id    = $invest->id;
+                $transaction->amount       = $payAmount;
+                $transaction->charge       = 0;
+                $transaction->post_balance = $invest->amount;
+                $transaction->trx_type     = $payAmount >= 0 ? '+' : '-';
+                $transaction->trx          = $trx;
+                $transaction->wallet_type  = 'interest_wallet';
+                $transaction->remark       = 'interest';
+                $transaction->details      = showAmount($payAmount) . ' ' . $setting->cur_text . ' interest from ' . $planName . ' (' . $periodLabel . ') compounded into capital';
+                $transaction->save();
+            } else {
+                $user->interest_wallet += $payAmount;
+                $user->save();
+
+                $transaction               = new Transaction();
+                $transaction->user_id      = $user->id;
+                $transaction->invest_id    = $invest?->id;
+                $transaction->amount       = $payAmount;
+                $transaction->charge       = 0;
+                $transaction->post_balance = $user->interest_wallet;
+                $transaction->trx_type     = $payAmount >= 0 ? '+' : '-';
+                $transaction->trx          = $trx;
+                $transaction->wallet_type  = 'interest_wallet';
+                $transaction->remark       = 'interest';
+                $transaction->details      = showAmount($payAmount) . ' ' . $setting->cur_text . ' interest from ' . $planName . ' (' . $periodLabel . ')';
+                $transaction->save();
+            }
 
             $item->transaction_id = $transaction->id;
 

@@ -32,7 +32,7 @@ class UserController extends Controller
         $data['pageTitle']         = 'Dashboard';
         $user                      = auth()->user();
         $data['user']              = $user;
-        $data['totalInvest']       = Invest::where('user_id', auth()->id())->sum('amount');
+        $data['totalInvest']       = Invest::where('user_id', auth()->id())->sum('initial_amount');
         $data['totalWithdraw']     = Withdrawal::where('user_id', $user->id)->whereIn('status', [1])->sum('amount');
         $data['lastWithdraw']      = Withdrawal::where('user_id', $user->id)->whereIn('status', [1])->latest()->first('amount');
         $data['totalDeposit']      = Deposit::where('user_id', $user->id)->where('status', 1)->sum('amount');
@@ -55,8 +55,8 @@ class UserController extends Controller
         $data['requestedWithdrawals']  = Withdrawal::where('user_id', $user->id)->sum('amount');
         $data['pendingWithdrawals']    = Withdrawal::pending()->where('user_id', $user->id)->sum('amount');
 
-        $data['invests']               = Invest::where('user_id', $user->id)->sum('amount');
-        $data['completedInvests']      = Invest::where('user_id', $user->id)->where('status', 0)->sum('amount');
+        $data['invests']               = Invest::where('user_id', $user->id)->sum('initial_amount');
+        $data['completedInvests']      = Invest::where('user_id', $user->id)->where('status', 0)->sum('initial_amount');
         $data['runningInvests']        = Invest::where('user_id', $user->id)->where('status', 1)->sum('amount');
         $data['interests']             = Transaction::where('remark', 'interest')->where('user_id', $user->id)->sum('amount');
         $data['depositWalletInvests']  = Invest::where('user_id', $user->id)->where('wallet_type', 'deposit_wallet')->where('status', 1)->sum('amount');

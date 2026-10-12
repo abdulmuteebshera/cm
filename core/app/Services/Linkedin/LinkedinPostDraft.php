@@ -248,6 +248,7 @@ class LinkedinPostDraft
     {
         $candidates = $bold
             ? [
+                base_path('resources/fonts/Roboto-Bold.ttf'),
                 'C:\\Windows\\Fonts\\segoeuib.ttf',
                 'C:\\Windows\\Fonts\\arialbd.ttf',
                 '/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf',
@@ -255,6 +256,7 @@ class LinkedinPostDraft
                 '/usr/share/fonts/truetype/liberation/LiberationSans-Bold.ttf',
             ]
             : [
+                base_path('resources/fonts/Roboto-Regular.ttf'),
                 'C:\\Windows\\Fonts\\segoeui.ttf',
                 'C:\\Windows\\Fonts\\arial.ttf',
                 '/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf',

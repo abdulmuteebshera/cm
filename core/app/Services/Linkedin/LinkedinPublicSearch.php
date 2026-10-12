@@ -13,16 +13,19 @@ class LinkedinPublicSearch
     public function searchMore(int $limit = 10): string
     {
         $settings = LinkedinSetting::current();
-        $queries = $this->queries();
-        $start = (int) $settings->search_cursor % count($queries);
+        $offset = max(0, (int) $settings->search_cursor);
         $added = [];
         $already = 0;
-        $attempts = 0;
+        $pages = 0;
 
-        while (count($added) < $limit && $attempts < 3) {
-            $query = $queries[($start + $attempts) % count($queries)];
-            $attempts++;
-            foreach ($this->resultPages($query) as $result) {
+        while (count($added) < $limit && $pages < 3) {
+            $rows = $this->wikidataPage($offset);
+            $pages++;
+            $offset += 30;
+            if ($rows === []) {
+                break;
+            }
+            foreach ($rows as $result) {
                 if (count($added) >= $limit) {
                     break;
                 }
@@ -38,7 +41,7 @@ class LinkedinPublicSearch
             }
         }
 
-        $settings->search_cursor = $start + $attempts;
+        $settings->search_cursor = $offset;
         $settings->save();
 
         if ($added !== []) {
@@ -89,7 +92,7 @@ class LinkedinPublicSearch
 
         LinkedinProspect::query()->create([
             'name' => mb_substr($name, 0, 120),
-            'company' => mb_substr($result['company'] !== '' ? $result['company'] : 'Family office', 0, 160),
+            'company' => mb_substr($result['company'] !== '' ? $result['company'] : 'Company', 0, 160),
             'title' => mb_substr($result['title'], 0, 160) ?: null,
             'profile_url' => $url,
             'location' => mb_substr($result['location'], 0, 120) ?: null,
@@ -100,159 +103,112 @@ class LinkedinPublicSearch
         return $name;
     }
 
-    private function resultPages(string $query): array
+    private function wikidataPage(int $offset): array
     {
-        $found = [];
-        foreach ([
-            'https://html.duckduckgo.com/html/?q='.rawurlencode($query),
-            'https://www.bing.com/search?q='.rawurlencode($query).'&count=20',
-        ] as $page) {
-            $html = $this->fetch($page);
-            $found = array_merge($found, $this->parseDuckDuckGo($html), $this->parseBing($html));
-            if ($found !== []) {
-                return $found;
-            }
-        }
+        $sparql = <<<SPARQL
+SELECT ?personLabel ?linkedin ?descr WHERE {
+  ?person wdt:P106 wd:Q484876 .
+  ?person wdt:P6634 ?linkedin .
+  ?person rdfs:label ?personLabel . FILTER(LANG(?personLabel)="en")
+  OPTIONAL { ?person schema:description ?descr . FILTER(LANG(?descr)="en") }
+}
+LIMIT 30 OFFSET {$offset}
+SPARQL;
 
-        return [];
-    }
-
-    private function fetch(string $url): string
-    {
         try {
             $response = Http::withHeaders([
-                'User-Agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
-                'Accept-Language' => 'en-US,en;q=0.9',
-            ])->timeout(25)->get($url);
+                'Accept' => 'application/sparql-results+json',
+                'User-Agent' => 'CrownmairePortal/1.0 (public profile research)',
+            ])->timeout(25)->get('https://query.wikidata.org/sparql', [
+                'query' => $sparql,
+            ]);
         } catch (\Throwable $exception) {
             throw new RuntimeException('The public search could not be reached. Try again in a moment.');
         }
 
         if (!$response->successful()) {
-            return '';
-        }
-
-        return (string) $response->body();
-    }
-
-    private function parseDuckDuckGo(string $html): array
-    {
-        if ($html === '') {
-            return [];
+            throw new RuntimeException('The public search could not be reached. Try again in a moment.');
         }
 
         $found = [];
-        if (!preg_match_all('#<a[^>]*class="result__a"[^>]*href="([^"]+)"[^>]*>(.*?)</a>#is', $html, $links, PREG_SET_ORDER)) {
-            return [];
-        }
-
-        preg_match_all('#<a[^>]*class="result__snippet"[^>]*>(.*?)</a>#is', $html, $snippets);
-        $snippetList = $snippets[1] ?? [];
-
-        foreach ($links as $index => $link) {
-            $url = $this->unwrapUrl(html_entity_decode($link[1]));
-            if (!preg_match('#linkedin\.com/in/#i', $url)) {
+        foreach ($response->json()['results']['bindings'] ?? [] as $row) {
+            $slug = $this->profileSlug((string) ($row['linkedin']['value'] ?? ''));
+            $name = trim((string) ($row['personLabel']['value'] ?? ''));
+            $note = trim((string) ($row['descr']['value'] ?? ''));
+            if ($slug === '' || $name === '' || isset($found[$slug]) || !$this->usableDescription($note)) {
                 continue;
             }
-            $heading = $this->plain($link[2]);
-            $snippet = $this->plain($snippetList[$index] ?? '');
-            $parsed = $this->describe($heading, $snippet);
-            $parsed['url'] = $url;
-            $found[] = $parsed;
+            $found[$slug] = [
+                'url' => 'https://www.linkedin.com/in/'.$slug,
+                'name' => $name,
+                'title' => $this->titleFrom($note),
+                'company' => $this->companyFrom($note),
+                'location' => '',
+                'note' => $note !== '' ? $note : 'Public chief executive profile.',
+            ];
         }
 
-        return $found;
+        return array_values($found);
     }
 
-    private function parseBing(string $html): array
+    private function profileSlug(string $value): string
     {
-        if ($html === '' || !preg_match_all('#<li class="b_algo".*?</li>#is', $html, $items)) {
-            return [];
+        $value = trim(rawurldecode($value));
+        if (preg_match('#linkedin\.com/in/([A-Za-z0-9\-_%]+)#i', $value, $match)) {
+            $value = $match[1];
         }
+        $value = trim($value, "/ \t\n\r");
 
-        $found = [];
-        foreach ($items[0] as $item) {
-            if (!preg_match('#<h2[^>]*>.*?<a[^>]*href="([^"]+)"[^>]*>(.*?)</a>#is', $item, $link)) {
-                continue;
-            }
-            $url = $this->decodeBingUrl(html_entity_decode($link[1]));
-            if (!preg_match('#linkedin\.com/in/#i', $url)) {
-                continue;
-            }
-            $snippet = '';
-            if (preg_match('#<p[^>]*>(.*?)</p>#is', $item, $paragraph)) {
-                $snippet = $this->plain($paragraph[1]);
-            }
-            $parsed = $this->describe($this->plain($link[2]), $snippet);
-            $parsed['url'] = $url;
-            $found[] = $parsed;
-        }
-
-        return $found;
+        return preg_match('/^[A-Za-z0-9][A-Za-z0-9\-_%]{1,98}[A-Za-z0-9]$/', $value) ? $value : '';
     }
 
-    private function decodeBingUrl(string $url): string
+    private function usableDescription(string $note): bool
     {
-        if (!preg_match('/[?&]u=a1([A-Za-z0-9_\-]+)/', $url, $match)) {
-            return $url;
+        if (preg_match('/\b(died|deceased)\b|\(\d{4}\s*[–-]\s*\d{4}\)/u', $note)) {
+            return false;
+        }
+        if ($note === '') {
+            return true;
         }
 
-        $token = strtr($match[1], '-_', '+/');
-        $pad = strlen($token) % 4;
-        if ($pad) {
-            $token .= str_repeat('=', 4 - $pad);
-        }
-        $decoded = base64_decode($token, true);
-
-        return is_string($decoded) && $decoded !== '' ? $decoded : $url;
+        return preg_match('/\b(business|executive|founder|investor|billionaire|compan|chairman|chairwoman|entrepreneur|chief executive|ceo|owner|holding)\b/i', $note) === 1;
     }
 
-    private function describe(string $heading, string $snippet): array
+    private function titleFrom(string $note): string
     {
-        $heading = preg_replace('/\s*\|\s*LinkedIn\s*$/i', '', $heading) ?? $heading;
-        $name = $heading;
-        $role = '';
-        if (str_contains($heading, ' - ')) {
-            [$name, $role] = array_pad(explode(' - ', $heading, 2), 2, '');
+        $founder = preg_match('/\bfounder\b/i', $note) === 1;
+        $chairwoman = preg_match('/\bchairwoman\b/i', $note) === 1;
+        $chairman = preg_match('/\bchairman\b/i', $note) === 1;
+        if (preg_match('/\bfamily office\b/i', $note)) {
+            return $founder ? 'Founder and family office chief executive' : 'Family office chief executive';
+        }
+        if ($founder && ($chairman || $chairwoman)) {
+            return 'Founder and Chairman';
+        }
+        if ($founder) {
+            return 'Founder and Chief Executive Officer';
+        }
+        if ($chairwoman) {
+            return 'Chairwoman and Chief Executive Officer';
+        }
+        if ($chairman) {
+            return 'Chairman and Chief Executive Officer';
         }
 
-        $company = '';
-        if (preg_match('/\bat\s+([^|.]{2,80})/i', $role.' '.$snippet, $match)) {
+        return 'Chief Executive Officer';
+    }
+
+    private function companyFrom(string $note): string
+    {
+        if (preg_match('/\b(?:of|at)\s+([^.;]{2,80})/i', $note, $match)) {
             $company = trim($match[1]);
-        }
-        if ($company === '' && preg_match('/\b(Family Office|Holdings|Holding|Group|Capital)\b/i', $role.' '.$snippet, $match)) {
-            $company = trim($match[0]);
-        }
+            $company = preg_replace('/\s+\(.*$/', '', $company) ?? $company;
+            $company = preg_replace('/\s+since\s+\d{4}.*$/i', '', $company) ?? $company;
 
-        $location = '';
-        if (preg_match('/\b(Dubai|New York|London|Singapore|Geneva|Zurich|Mumbai|Toronto|Abu Dhabi)\b/i', $snippet, $match)) {
-            $location = $match[1];
+            return trim($company, " ,");
         }
 
-        return [
-            'name' => trim($name),
-            'title' => trim($role) !== '' ? trim($role) : 'Founder',
-            'company' => $company,
-            'location' => $location,
-            'note' => $snippet !== '' ? $snippet : 'Found in a public web search for family offices and business owners.',
-        ];
-    }
-
-    private function unwrapUrl(string $url): string
-    {
-        if (preg_match('/[?&]uddg=([^&]+)/', $url, $match)) {
-            return urldecode($match[1]);
-        }
-
-        return $url;
-    }
-
-    private function plain(string $html): string
-    {
-        $text = html_entity_decode(strip_tags($html));
-        $text = preg_replace('/\s+/', ' ', $text) ?? $text;
-
-        return trim($text);
+        return '';
     }
 
     private function cleanName(string $name): string
@@ -263,19 +219,5 @@ class LinkedinPublicSearch
         }
 
         return $name;
-    }
-
-    private function queries(): array
-    {
-        return [
-            'site:linkedin.com/in family office founder CEO Dubai',
-            'site:linkedin.com/in family office president "New York"',
-            'site:linkedin.com/in single family office principal London',
-            'site:linkedin.com/in holding company chairman founder Dubai',
-            'site:linkedin.com/in multi family office founder Singapore',
-            'site:linkedin.com/in family office chief investment officer',
-            'site:linkedin.com/in "family office" founder Geneva',
-            'site:linkedin.com/in business owner chairman "holding" Dubai',
-        ];
     }
 }

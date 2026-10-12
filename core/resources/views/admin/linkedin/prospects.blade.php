@@ -51,7 +51,7 @@
                     </form>
                     <form method="post" action="{{ route('admin.linkedin.prospects.search') }}" class="mt-4">
                         @csrf
-                        <p>@lang('Search public web results for more family offices, owners, and CEOs. People already on the list are skipped.')</p>
+                        <p>@lang('Search more public profiles of chief executives, founders, and chairmen. People already on the list are skipped.')</p>
                         <button type="submit" class="btn btn--primary">@lang('Search more')</button>
                     </form>
                 </div>

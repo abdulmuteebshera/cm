@@ -2,7 +2,7 @@
 @section('panel')
     <div class="card b-radius--10 mb-3">
         <div class="card-body">
-            <p class="mb-0">@lang('Write a short context. The post text, keywords, and picture are created from that context and from the Crownmaire site: quantitative asset management, invitation-only programs from $20,000, New York and Dubai. Approve it to publish. There is no waiting period.')</p>
+            <p class="mb-0">@lang('Write a short context. The text is written from that context and the Crownmaire site, with hashtags added automatically. The picture uses the Crownmaire logo, the site colors, and the contact details from the website, at LinkedIn’s portrait post size. Approve it to publish.')</p>
         </div>
     </div>
 
@@ -14,11 +14,6 @@
                 <div class="form-group">
                     <label>@lang('Context')</label>
                     <textarea name="context" class="form-control" rows="4" maxlength="500" required placeholder="Example: Family offices in Dubai reviewing a private multi-asset program">{{ old('context') }}</textarea>
-                </div>
-                <div class="form-group">
-                    <label>@lang('Extra keywords')</label>
-                    <input type="text" name="keywords" class="form-control" maxlength="200" value="{{ old('keywords') }}" placeholder="family office, private allocation, Dubai">
-                    <small class="text-muted">@lang('Optional. Site keywords are added as well.')</small>
                 </div>
                 <button class="btn btn--primary" type="submit">@lang('Create post')</button>
             </form>
@@ -36,7 +31,7 @@
                     <div class="alert alert-danger">{{ $post->error }}</div>
                 @endif
                 @if($post->image)
-                    <img src="{{ getImage($post->image) }}" alt="" class="mb-3" style="max-width:280px;height:auto;">
+                    <img src="{{ getImage($post->image) }}" alt="" class="mb-3" style="max-width:320px;height:auto;">
                 @else
                     <div class="alert alert-warning">@lang('Add a picture before this post can be approved.')</div>
                 @endif

@@ -523,12 +523,11 @@ class LinkedinOutreachController extends Controller
         }
 
         $request->validate([
-            'context'  => 'required|string|max:500',
-            'keywords' => 'nullable|string|max:200',
+            'context' => 'required|string|max:500',
         ]);
 
         try {
-            app(LinkedinPostDraft::class)->create($request->context, $request->keywords);
+            app(LinkedinPostDraft::class)->create($request->context);
         } catch (RuntimeException $exception) {
             $notify[] = ['error', $exception->getMessage()];
             return back()->withNotify($notify)->withInput();

@@ -3,22 +3,20 @@
 namespace App\Services\Linkedin;
 
 use App\Models\LinkedinPost;
-use App\Support\Seo\SeoSite;
 use RuntimeException;
 
 class LinkedinPostDraft
 {
-    public function create(string $context, ?string $keywords = null): LinkedinPost
+    public function create(string $context): LinkedinPost
     {
         $context = $this->clean($context);
         if ($context === '') {
             throw new RuntimeException('Write a short context for the post.');
         }
 
-        $keywords = $this->clean((string) $keywords);
         $post = new LinkedinPost();
-        $post->commentary = $this->commentary($context, $keywords);
-        $post->image = $this->image($context, $keywords);
+        $post->commentary = $this->commentary($context);
+        $post->image = $this->image($context);
         $post->source = 'manual';
         $post->status = 'pending_approval';
         $post->scheduled_for = today();
@@ -27,72 +25,48 @@ class LinkedinPostDraft
         return $post;
     }
 
-    private function commentary(string $context, string $keywords): string
+    private function commentary(string $context): string
     {
         $lead = rtrim($context, '.');
         $text = $lead.".\n\n";
         $text .= 'Crownmaire Capital is a quantitative asset management firm for qualified investors. Programs are private and invitation-only, built on research, algorithmic execution, and multi-asset exposure across currencies, indices, commodities, futures, and select equities. ';
         $text .= 'Offices are in New York and Dubai. Participation starts at $20,000, with room for larger allocations.';
-        $text .= "\n\n".$this->hashtags($context, $keywords);
+        $text .= "\n\n".$this->hashtags($text);
 
         return mb_substr($text, 0, 3000);
     }
 
-    private function hashtags(string $context, string $keywords): string
+    private function hashtags(string $text): string
     {
-        $tags = ['CrownmaireCapital', 'QuantitativeAssetManagement', 'QualifiedInvestors'];
+        $tags = ['CrownmaireCapital'];
         $themes = [
+            'quantitative' => 'QuantitativeAssetManagement',
+            'qualified' => 'QualifiedInvestors',
             'dubai' => 'Dubai',
             'new york' => 'NewYork',
             'multi-asset' => 'MultiAsset',
             'multi asset' => 'MultiAsset',
             'algorithm' => 'AlgorithmicInvesting',
             'family office' => 'FamilyOffice',
+            'invitation-only' => 'PrivateInvestment',
             'private' => 'PrivateInvestment',
             'institutional' => 'InstitutionalInvesting',
             'risk' => 'RiskManagement',
             'portal' => 'InstitutionalReporting',
-            'quant' => 'QuantitativeTrading',
         ];
-        $haystack = strtolower($context.' '.$keywords);
+        $haystack = strtolower($text);
         foreach ($themes as $needle => $tag) {
             if (str_contains($haystack, $needle)) {
                 $tags[] = $tag;
             }
         }
-        foreach (preg_split('/[,;]+/', $keywords) ?: [] as $word) {
-            $tag = $this->tag((string) $word);
-            if ($tag !== '') {
-                $tags[] = $tag;
-            }
-        }
-        foreach (['NewYork', 'Dubai', 'MultiAsset'] as $tag) {
-            $tags[] = $tag;
-        }
+
         $tags = array_slice(array_values(array_unique($tags)), 0, 8);
 
         return implode(' ', array_map(fn (string $tag) => '#'.$tag, $tags));
     }
 
-    private function tag(string $word): string
-    {
-        $word = trim($word);
-        if ($word === '') {
-            return '';
-        }
-        $parts = preg_split('/\s+/', strtolower($word)) ?: [];
-        $tag = '';
-        foreach ($parts as $part) {
-            $part = preg_replace('/[^a-z0-9]/', '', $part) ?? '';
-            if ($part !== '') {
-                $tag .= ucfirst($part);
-            }
-        }
-
-        return strlen($tag) >= 3 ? $tag : '';
-    }
-
-    private function image(string $context, string $keywords): string
+    private function image(string $context): string
     {
         if (!function_exists('imagecreatetruecolor') || !function_exists('imagettftext')) {
             throw new RuntimeException('The server cannot draw the post image. Enable the PHP GD extension.');
@@ -100,8 +74,8 @@ class LinkedinPostDraft
 
         $font = $this->font(false);
         $bold = $this->font(true);
-        $width = 1200;
-        $height = 627;
+        $width = 1080;
+        $height = 1350;
         $image = imagecreatetruecolor($width, $height);
         if ($image === false) {
             throw new RuntimeException('The post image could not be created.');
@@ -122,86 +96,97 @@ class LinkedinPostDraft
         $blue = imagecolorallocate($image, 0, 51, 173);
         $white = imagecolorallocate($image, 255, 255, 255);
         $muted = imagecolorallocate($image, 190, 205, 224);
+        $footer = imagecolorallocate($image, 6, 12, 28);
         imagefilledrectangle($image, 0, 0, 8, $height, $teal);
 
-        imagettftext($image, 18, 0, 72, 92, $teal, $bold, 'CROWNMAIRE CAPITAL');
-        imagettftext($image, 16, 0, 72, 128, $muted, $font, 'Quantitative asset management  ·  New York  ·  Dubai');
+        $this->placeLogo($image, 230, 64, 620);
+        $this->centeredText($image, 18, 250, $muted, $font, 'Quantitative asset management');
 
-        $lines = $this->wrap($bold, 36, $this->headline($context), 680);
-        $y = 230;
+        $lines = $this->wrap($bold, 42, $this->headline($context), 900);
+        $y = 420;
         foreach ($lines as $line) {
-            imagettftext($image, 36, 0, 72, $y, $white, $bold, $line);
-            $y += 52;
+            $this->centeredText($image, 42, $y, $white, $bold, $line);
+            $y += 62;
         }
 
-        $pills = array_slice($this->pillWords($context, $keywords), 0, 4);
-        $x = 72;
-        foreach ($pills as $pill) {
-            $box = imagettfbbox(14, 0, $font, $pill);
-            $pillWidth = abs($box[2] - $box[0]) + 28;
-            imagefilledrectangle($image, $x, 500, $x + $pillWidth, 540, $blue);
-            imagettftext($image, 14, 0, $x + 14, 527, $white, $font, $pill);
-            $x += $pillWidth + 12;
-        }
+        $this->drawMotif($image, 390, 1040, $teal, $blue);
+        imagefilledrectangle($image, 0, 1120, $width, $height, $footer);
+        imagefilledrectangle($image, 0, 1120, $width, 1126, $teal);
 
-        $this->drawMotif($image, $context, $teal, $blue, $white);
+        imagettftext($image, 16, 0, 56, 1184, $teal, $bold, 'NEW YORK');
+        imagettftext($image, 18, 0, 56, 1220, $white, $font, '100 Wall Street Ct, NY 10005');
+        imagettftext($image, 16, 0, 560, 1184, $teal, $bold, 'DUBAI');
+        imagettftext($image, 18, 0, 560, 1220, $white, $font, '2402 Al-Manara Tower, Business Bay');
+        $this->centeredText($image, 20, 1300, $white, $font, '+1 917 500 6476    ·    Info@crownmaire.com');
+
         $relative = $this->store($image);
         imagedestroy($image);
 
         return $relative;
     }
 
-    private function drawMotif($image, string $context, int $teal, int $blue, int $white): void
+    private function placeLogo($image, int $x, int $y, int $width): void
     {
-        $haystack = strtolower($context);
-        $bars = str_contains($haystack, 'dubai') || str_contains($haystack, 'new york')
-            ? [70, 120, 90, 160, 110, 190, 140]
-            : [60, 100, 80, 140, 180, 150, 210];
-        $baseX = 860;
-        $baseY = 470;
-        foreach ($bars as $index => $bar) {
-            $x = $baseX + ($index * 42);
-            $color = $index % 2 === 0 ? $teal : $blue;
-            imagefilledrectangle($image, $x, $baseY - $bar, $x + 26, $baseY, $color);
+        $path = assetFilesystemPath('assets/images/logoIcon/logo.png');
+        if (!is_file($path)) {
+            throw new RuntimeException('The Crownmaire logo is missing from the server.');
         }
-        imagefilledellipse($image, 1040, 180, 150, 150, $teal);
-        imagefilledellipse($image, 1040, 180, 90, 90, imagecolorallocate($image, 3, 12, 28));
-        imageline($image, 900, 390, 1120, 250, $white);
+
+        $source = imagecreatefrompng($path);
+        if ($source === false) {
+            throw new RuntimeException('The Crownmaire logo could not be read.');
+        }
+
+        $sourceWidth = imagesx($source);
+        $sourceHeight = imagesy($source);
+        $height = (int) max(1, round($width * $sourceHeight / $sourceWidth));
+        $scaled = imagecreatetruecolor($width, $height);
+        imagealphablending($scaled, false);
+        imagesavealpha($scaled, true);
+        $clear = imagecolorallocatealpha($scaled, 0, 0, 0, 127);
+        imagefilledrectangle($scaled, 0, 0, $width, $height, $clear);
+        imagecopyresampled($scaled, $source, 0, 0, 0, 0, $width, $height, $sourceWidth, $sourceHeight);
+
+        for ($pixelY = 0; $pixelY < $height; $pixelY++) {
+            for ($pixelX = 0; $pixelX < $width; $pixelX++) {
+                $rgb = imagecolorat($scaled, $pixelX, $pixelY);
+                $red = ($rgb >> 16) & 0xFF;
+                $green = ($rgb >> 8) & 0xFF;
+                $blue = $rgb & 0xFF;
+                if ($red < 40 && $green < 40 && $blue < 40) {
+                    imagesetpixel($scaled, $pixelX, $pixelY, $clear);
+                }
+            }
+        }
+
+        imagealphablending($image, true);
+        imagecopy($image, $scaled, $x, $y, 0, 0, $width, $height);
+        imagedestroy($source);
+        imagedestroy($scaled);
     }
 
-    private function pillWords(string $context, string $keywords): array
+    private function centeredText($image, int $size, int $y, int $color, string $font, string $text): void
     {
-        $words = ['Qualified investors', 'Multi-asset'];
-        $haystack = strtolower($context.' '.$keywords);
-        if (str_contains($haystack, 'dubai')) {
-            $words[] = 'Dubai';
-        }
-        if (str_contains($haystack, 'new york')) {
-            $words[] = 'New York';
-        }
-        if (str_contains($haystack, 'family')) {
-            $words[] = 'Family office';
-        }
-        foreach (SeoSite::defaultKeywords() as $keyword) {
-            if (str_contains($haystack, strtolower($keyword))) {
-                $words[] = $keyword;
-            }
-        }
-        foreach (preg_split('/[,;]+/', $keywords) ?: [] as $word) {
-            $word = trim($word);
-            if ($word !== '') {
-                $words[] = mb_substr($word, 0, 28);
-            }
-        }
+        $box = imagettfbbox($size, 0, $font, $text);
+        $textWidth = abs($box[2] - $box[0]);
+        $x = (int) max(24, (1080 - $textWidth) / 2);
+        imagettftext($image, $size, 0, $x, $y, $color, $font, $text);
+    }
 
-        return array_values(array_unique($words));
+    private function drawMotif($image, int $baseX, int $baseY, int $teal, int $blue): void
+    {
+        $bars = [46, 88, 64, 124, 96, 150, 112];
+        foreach ($bars as $index => $bar) {
+            $x = $baseX + ($index * 42);
+            imagefilledrectangle($image, $x, $baseY - $bar, $x + 24, $baseY, $index % 2 === 0 ? $teal : $blue);
+        }
     }
 
     private function headline(string $context): string
     {
         $headline = rtrim($context, '.');
-        if (mb_strlen($headline) > 110) {
-            $headline = rtrim(mb_substr($headline, 0, 107)).'...';
+        if (mb_strlen($headline) > 160) {
+            $headline = rtrim(mb_substr($headline, 0, 157)).'...';
         }
 
         return $headline;
@@ -225,7 +210,7 @@ class LinkedinPostDraft
             $lines[] = $line;
         }
 
-        return array_slice($lines, 0, 4);
+        return array_slice($lines, 0, 6);
     }
 
     private function store($image): string

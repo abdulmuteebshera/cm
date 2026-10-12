@@ -140,7 +140,7 @@
                     <a href="{{ route('admin.ticket.pending') }}" class="nav-link "><i class="menu-icon las la-ticket-alt"></i><span class="menu-title">@lang('Support Ticket')</span></a>
                 </li>
                 <li class="sidebar-menu-item {{ menuActive('admin.contact*') }}">
-                    <a href="{{ route('admin.contact.index') }}" class="nav-link "><i class="menu-icon las la-envelope"></i><span class="menu-title">@lang('Contact Form')</span></a>
+                    <a href="{{ route('admin.contact.index') }}" class="nav-link "><i class="menu-icon las la-envelope"></i><span class="menu-title">@lang('Investment Inquiries')</span></a>
                 </li>
                 @endif
 

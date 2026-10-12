@@ -136,12 +136,14 @@ class SeoSite
             'Dubai investment firm',
             'fintech asset management',
             'qualified investor programs',
+            'investment inquiry',
+            'contact investment firm',
         ];
     }
 
     public static function defaultDescription(): string
     {
-        return 'Crownmaire Capital is a quantitative asset management firm offering invitation-only multi-asset investment programs for qualified investors, with offices in New York and Dubai.';
+        return 'Crownmaire Capital is a quantitative asset management firm. Qualified investors can send an investment inquiry and the team will contact them about private multi-asset programs. Offices in New York and Dubai.';
     }
 
     public static function logoUrl(): string

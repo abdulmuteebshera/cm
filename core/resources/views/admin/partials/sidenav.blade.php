@@ -63,6 +63,41 @@
                     </a>
                 </li>
 
+                <li class="sidebar-menu-item sidebar-dropdown">
+                    <a href="javascript:void(0)" class="{{ menuActive('admin.linkedin*', 3) }}">
+                        <i class="menu-icon las la-paper-plane"></i>
+                        <span class="menu-title">@lang('LinkedIn Outreach')</span>
+                    </a>
+                    <div class="sidebar-submenu {{ menuActive('admin.linkedin*', 2) }} ">
+                        <ul>
+                            <li class="sidebar-menu-item {{ menuActive('admin.linkedin.index') }}">
+                                <a href="{{ route('admin.linkedin.index') }}" class="nav-link">
+                                    <i class="menu-icon las la-dot-circle"></i>
+                                    <span class="menu-title">@lang('Overview')</span>
+                                </a>
+                            </li>
+                            <li class="sidebar-menu-item {{ menuActive('admin.linkedin.prospects*') }}">
+                                <a href="{{ route('admin.linkedin.prospects') }}" class="nav-link">
+                                    <i class="menu-icon las la-dot-circle"></i>
+                                    <span class="menu-title">@lang('Prospects')</span>
+                                </a>
+                            </li>
+                            <li class="sidebar-menu-item {{ menuActive('admin.linkedin.posts*') }}">
+                                <a href="{{ route('admin.linkedin.posts') }}" class="nav-link">
+                                    <i class="menu-icon las la-dot-circle"></i>
+                                    <span class="menu-title">@lang('Posts')</span>
+                                </a>
+                            </li>
+                            <li class="sidebar-menu-item {{ menuActive('admin.linkedin.report') }}">
+                                <a href="{{ route('admin.linkedin.report') }}" class="nav-link">
+                                    <i class="menu-icon las la-dot-circle"></i>
+                                    <span class="menu-title">@lang('Daily Report')</span>
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                </li>
+
                 <li class="sidebar-menu-item {{ menuActive('admin.referrals.index') }}">
                     <a href="{{ route('admin.referrals.index') }}" class="nav-link ">
                         <i class="menu-icon las la-tree"></i>
@@ -417,7 +452,7 @@
                 <li class="sidebar-menu-item sidebar-dropdown">
                     <a href="javascript:void(0)" class="{{ menuActive('admin.contact*', 3) }}">
                         <i class="menu-icon las la-envelope"></i>
-                        <span class="menu-title">@lang('Contact Form') </span>
+                        <span class="menu-title">@lang('Investment Inquiries') </span>
                         @if (!empty($pendingContactCount))
                             <span class="menu-badge pill bg--danger ms-auto">
                                 <i class="fa fa-exclamation"></i>
@@ -429,7 +464,7 @@
                             <li class="sidebar-menu-item {{ menuActive('admin.contact.pending') }} ">
                                 <a href="{{ route('admin.contact.pending') }}" class="nav-link">
                                     <i class="menu-icon las la-dot-circle"></i>
-                                    <span class="menu-title">@lang('Pending Messages')</span>
+                                    <span class="menu-title">@lang('New Inquiries')</span>
                                     @if (!empty($pendingContactCount))
                                         <span class="menu-badge pill bg--danger ms-auto">{{ $pendingContactCount }}</span>
                                     @endif
@@ -438,7 +473,7 @@
                             <li class="sidebar-menu-item {{ menuActive('admin.contact.index') }} ">
                                 <a href="{{ route('admin.contact.index') }}" class="nav-link">
                                     <i class="menu-icon las la-dot-circle"></i>
-                                    <span class="menu-title">@lang('All Submissions')</span>
+                                    <span class="menu-title">@lang('All Inquiries')</span>
                                 </a>
                             </li>
                         </ul>

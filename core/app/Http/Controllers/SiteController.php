@@ -21,6 +21,7 @@ use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cookie;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\Rule;
 
 class SiteController extends Controller
 {
@@ -148,59 +149,62 @@ class SiteController extends Controller
 
     public function contact()
     {
-        $pageTitle = "Contact Us";
+        $pageTitle = 'Investment Inquiry';
         $user = auth()->user();
         return view($this->activeTemplate . 'contact', compact('pageTitle', 'user'));
     }
 
     public function contactSubmit(Request $request)
     {
+        if ($request->filled('cm_leave_blank')) {
+            $notify[] = ['success', 'Your investment inquiry has been received. Our team will contact you shortly.'];
+            return to_route('contact')->withNotify($notify)->withFragment('inquiry');
+        }
+
+        if ($request->input('subject') === 'Others') {
+            $request->merge(['subject' => 'Other']);
+        }
+
         $this->validate($request, [
-            'name'         => 'required',
-            'email'        => 'required',
-            'subject'      => 'required|string|max:255',
-            'message'      => 'required',
-            'company_name' => 'nullable|string|max:255',
-            'phone'        => 'nullable|string|max:50',
+            'name'          => 'required|string|max:80',
+            'email'         => 'required|email|max:80',
+            'phone'         => 'required|string|max:40',
+            'company_name'  => 'nullable|string|max:120',
+            'subject'       => ['required', Rule::in(SupportTicket::inquiryReasons())],
+            'capital_range' => ['required', Rule::in(SupportTicket::capitalRanges())],
+            'message'       => 'required|string|max:2000',
         ]);
 
         $request->session()->regenerateToken();
-        $random = getNumber();
 
-        $messageBody = $request->message;
-        if ($request->company_name) {
-            $messageBody = __('Company') . ': ' . $request->company_name . "\n" . $messageBody;
-        }
-        if ($request->phone) {
-            $messageBody = __('Phone') . ': ' . $request->phone . "\n" . $messageBody;
-        }
-
-        $ticket           = new SupportTicket();
-        $ticket->user_id  = 0;
-        $ticket->name     = $request->name;
-        $ticket->email    = $request->email;
-        $ticket->priority = 2;
-
-        $ticket->ticket     = $random;
-        $ticket->subject    = $request->subject;
-        $ticket->last_reply = Carbon::now();
-        $ticket->status     = 0;
+        $ticket                = new SupportTicket();
+        $ticket->user_id       = 0;
+        $ticket->name          = $request->name;
+        $ticket->email         = $request->email;
+        $ticket->company_name  = $request->company_name;
+        $ticket->phone         = $request->phone;
+        $ticket->priority      = $request->subject === 'Investment' ? 3 : 2;
+        $ticket->ticket        = getNumber();
+        $ticket->subject       = $request->subject;
+        $ticket->capital_range = $request->capital_range;
+        $ticket->last_reply    = Carbon::now();
+        $ticket->status        = 0;
         $ticket->save();
 
         $adminNotification            = new AdminNotification();
         $adminNotification->user_id   = 0;
-        $adminNotification->title     = 'A new contact message has been submitted';
-        $adminNotification->click_url = urlPath('admin.ticket.view', $ticket->id);
+        $adminNotification->title     = ($request->subject === 'Investment' ? 'New investment inquiry from ' : 'New contact inquiry from ') . $request->name;
+        $adminNotification->click_url = urlPath('admin.contact.show', $ticket->id);
         $adminNotification->save();
 
         $message                    = new SupportMessage();
         $message->support_ticket_id = $ticket->id;
-        $message->message           = $messageBody;
+        $message->message           = $request->message;
         $message->save();
 
-        $notify[] = ['success', 'Your message has been submitted successfully. Our team will contact you shortly.'];
+        $notify[] = ['success', 'Your investment inquiry has been received. Our team will contact you shortly.'];
 
-        return to_route('contact')->withNotify($notify);
+        return to_route('contact')->withNotify($notify)->withFragment('inquiry');
     }
 
     public function policyPages($slug, $id)

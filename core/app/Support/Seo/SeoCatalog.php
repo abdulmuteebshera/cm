@@ -101,7 +101,7 @@ class SeoCatalog
             ],
             'strategies' => [
                 'title'       => 'Investment Strategies | ' . $brand,
-                'description' => 'Explore Crownmaire Capital invitation-only quantitative, multi-asset, and capital-preservation programs designed for qualified investors.',
+                'description' => 'Explore Crownmaire Capital quantitative and multi-asset programs, then send an investment inquiry. The team contacts qualified investors about private access.',
                 'h1'          => 'Structured programs built for quantitative performance',
                 'keywords'    => array_merge(SeoSite::defaultKeywords(), ['investment strategies', 'quantitative strategies', 'multi-asset programs']),
                 'schemas'     => ['organization', 'website', 'webpage', 'financial', 'breadcrumb'],
@@ -149,11 +149,11 @@ class SeoCatalog
                 'schemas'     => ['organization', 'website', 'webpage', 'job', 'breadcrumb'],
             ],
             'contact' => [
-                'title'       => 'Contact ' . $brand . ' | Request an Invitation',
-                'description' => 'Contact Crownmaire Capital in New York or Dubai to request an invitation, private consultation, or institutional partnership.',
-                'h1'          => 'We welcome serious inquiries from eligible investors and institutions',
-                'keywords'    => array_merge(SeoSite::defaultKeywords(), ['contact Crownmaire Capital', 'request investment invitation']),
-                'schemas'     => ['organization', 'website', 'webpage', 'contact', 'breadcrumb'],
+                'title'       => 'Investment Inquiry | Contact ' . $brand,
+                'description' => 'Send an investment inquiry to Crownmaire Capital. Share your name, phone, and capital range and the team will contact you about private quantitative programs in New York and Dubai.',
+                'h1'          => 'Inquire about investing with Crownmaire Capital',
+                'keywords'    => array_merge(SeoSite::defaultKeywords(), ['investment inquiry', 'contact Crownmaire Capital', 'invest with Crownmaire']),
+                'schemas'     => ['organization', 'website', 'webpage', 'contact', 'faq', 'breadcrumb'],
             ],
             'cookie.policy' => [
                 'title'       => 'Cookie Policy | ' . $brand,
@@ -196,9 +196,31 @@ class SeoCatalog
         ];
     }
 
+    public static function contactFaqs(): array
+    {
+        return [
+            [
+                'q' => 'How do I inquire about investing with Crownmaire Capital?',
+                'a' => 'Complete the investment inquiry form with your name, email, phone, reason, and approximate capital range. Crownmaire reviews the inquiry and contacts you. This form is for new investment inquiries.',
+            ],
+            [
+                'q' => 'What happens after I send an investment inquiry?',
+                'a' => 'The team reviews the information you submitted and contacts you by phone or email if there is a fit. Sending the form does not open an account or commit capital.',
+            ],
+            [
+                'q' => 'Where can I reach Crownmaire Capital?',
+                'a' => 'Call +1 917 500 6476 or email Info@crownmaire.com. Offices are at 100 Wall Street Ct, New York, NY 10005 and 2402 Al-Manara Tower, Business Bay, Dubai.',
+            ],
+        ];
+    }
+
     public static function homeFaqs(): array
     {
         return [
+            [
+                'q' => 'How do I contact Crownmaire Capital about investing?',
+                'a' => 'Use the investment inquiry form on this website. Send your name, email, phone, and approximate capital range. Crownmaire reviews the inquiry and contacts you by phone or email. The public form is for new investment inquiries. Existing members use the portal for account support.',
+            ],
             [
                 'q' => 'What is Crownmaire Capital?',
                 'a' => 'Crownmaire Capital is a quantitative asset management firm that manages private, invitation-only investment programs for qualified investors. The firm combines data science, algorithmic execution, and institutional reporting across global markets, with offices in New York and Dubai.',
@@ -359,6 +381,14 @@ class SeoCatalog
                 ],
                 'email' => SeoSite::EMAIL,
                 'telephone' => SeoSite::PHONE,
+                'contactPoint' => [
+                    '@type' => 'ContactPoint',
+                    'telephone' => SeoSite::PHONE,
+                    'email' => SeoSite::EMAIL,
+                    'contactType' => 'investor relations',
+                    'areaServed' => ['US', 'AE'],
+                    'availableLanguage' => ['English'],
+                ],
                 'sameAs' => [
                     'https://' . SeoSite::ALIAS_HOST,
                     'https://' . SeoSite::PRIMARY_HOST,
@@ -435,7 +465,8 @@ class SeoCatalog
 
         if (in_array('faq', $schemas, true)) {
             $entities = [];
-            foreach (self::homeFaqs() as $faq) {
+            $faqs = ($page->route ?? '') === 'contact' ? self::contactFaqs() : self::homeFaqs();
+            foreach ($faqs as $faq) {
                 $entities[] = [
                     '@type' => 'Question',
                     'name'  => $faq['q'],
@@ -473,6 +504,11 @@ class SeoCatalog
                 'url'   => $page->canonical,
                 'name'  => $page->title,
                 'mainEntity' => ['@id' => $orgId],
+                'potentialAction' => [
+                    '@type' => 'CommunicateAction',
+                    'name' => 'Send an investment inquiry',
+                    'target' => $page->canonical . '#inquiry',
+                ],
             ];
         }
 

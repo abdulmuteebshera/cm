@@ -49,7 +49,7 @@ class PortalOverviewController extends Controller
     public function contacts()
     {
         $pageTitle = 'Contact Form Submissions (Read-only)';
-        $tickets   = SupportTicket::contactSubmissions()->orderByDesc('id')->paginate(getPaginate());
+        $tickets   = SupportTicket::contactSubmissions()->with('supportMessage')->orderByDesc('id')->paginate(getPaginate());
 
         return view('crm.portal.contacts', compact('pageTitle', 'tickets'));
     }

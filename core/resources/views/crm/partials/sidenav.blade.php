@@ -85,7 +85,7 @@
             <i class="las la-ticket-alt"></i> Support Tickets
         </a>
         <a href="{{ route('crm.portal.contacts') }}" class="{{ request()->routeIs('crm.portal.contacts') ? 'is-active' : '' }}">
-            <i class="las la-envelope"></i> Contact Form
+            <i class="las la-envelope"></i> Investment Inquiries
         </a>
     @endif
     @if($s->hasPermission('portal.investments'))

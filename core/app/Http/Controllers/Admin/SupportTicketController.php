@@ -63,21 +63,68 @@ class SupportTicketController extends Controller
 
     public function contactSubmissions()
     {
-        $pageTitle = 'Contact Form Submissions';
-        $items     = SupportTicket::contactSubmissions()->orderBy('id', 'desc')->paginate(getPaginate());
+        $pageTitle = 'Investment Inquiries';
+        $items     = $this->contactQuery()->paginate(getPaginate());
         return view('admin.support.contacts', compact('items', 'pageTitle'));
     }
 
     public function pendingContactSubmissions()
     {
-        $pageTitle = 'Pending Contact Submissions';
-        $items     = SupportTicket::contactSubmissions()->whereIn('status', [0, 2])->orderBy('id', 'desc')->paginate(getPaginate());
+        $pageTitle = 'New Investment Inquiries';
+        $items     = $this->contactQuery()->whereIn('status', [0, 2])->paginate(getPaginate());
         return view('admin.support.contacts', compact('items', 'pageTitle'));
+    }
+
+    public function contactShow($id)
+    {
+        $ticket    = SupportTicket::contactSubmissions()->with('supportMessage')->findOrFail($id);
+        $pageTitle = 'Investment Inquiry';
+        $lead      = $ticket->leadFields();
+        return view('admin.support.contact_lead', compact('ticket', 'pageTitle', 'lead'));
+    }
+
+    public function contactStatus(Request $request, $id)
+    {
+        $request->validate([
+            'status' => 'required|in:0,1,3',
+        ]);
+
+        $ticket = SupportTicket::contactSubmissions()->findOrFail($id);
+        $ticket->status = (int) $request->status;
+        $ticket->save();
+
+        $notify[] = ['success', 'Inquiry status updated'];
+        return back()->withNotify($notify);
+    }
+
+    protected function contactQuery()
+    {
+        $query = SupportTicket::contactSubmissions()->with('supportMessage')->orderByDesc('id');
+
+        if ($reason = request('reason')) {
+            $query->where('subject', $reason);
+        }
+
+        $search = trim((string) request('search'));
+        if ($search !== '') {
+            $query->where(function ($inner) use ($search) {
+                $inner->where('name', 'like', "%{$search}%")
+                    ->orWhere('email', 'like', "%{$search}%")
+                    ->orWhere('phone', 'like', "%{$search}%")
+                    ->orWhere('company_name', 'like', "%{$search}%")
+                    ->orWhere('subject', 'like', "%{$search}%");
+            });
+        }
+
+        return $query;
     }
 
     public function ticketReply($id)
     {
-        $ticket    = SupportTicket::with('user')->where('id', $id)->firstOrFail();
+        $ticket = SupportTicket::with('user')->where('id', $id)->firstOrFail();
+        if ($ticket->isContactSubmission()) {
+            return redirect()->route('admin.contact.show', $ticket->id);
+        }
         $pageTitle = 'Reply Ticket';
         $messages  = SupportMessage::with('ticket', 'admin', 'attachments')->where('support_ticket_id', $ticket->id)->orderBy('id', 'desc')->get();
         return view('admin.support.reply', compact('ticket', 'messages', 'pageTitle'));

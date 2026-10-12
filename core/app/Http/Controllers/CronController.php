@@ -271,6 +271,13 @@ class CronController extends Controller
             $cronLog->duration = $diffInSeconds;
             $cronLog->save();
         }
+
+        try {
+            app(\App\Services\Linkedin\LinkedinOutreach::class)->runIfDue();
+        } catch (\Throwable $exception) {
+            \Illuminate\Support\Facades\Log::warning('LinkedIn daily outreach skipped: '.$exception->getMessage());
+        }
+
         if (request()->alias) {
             $notify[] = ['success', keyToTitle(request()->alias) . ' executed successfully'];
             return back()->withNotify($notify);

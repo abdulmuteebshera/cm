@@ -100,7 +100,7 @@
         @if (auth()->check())
             <a href="{{ route('user.home') }}" class="cm-btn cm-btn--accent cm-btn--glow"><i class="las la-th-large"></i> @lang('Open Your Dashboard')</a>
         @else
-            <a href="{{ route('contact') }}" class="cm-btn cm-btn--accent cm-btn--glow"><i class="las la-paper-plane"></i> @lang('Request Invitation')</a>
+            <a href="{{ route('contact') }}#inquiry" class="cm-btn cm-btn--accent cm-btn--glow"><i class="las la-paper-plane"></i> @lang('Inquire About Investing')</a>
             <a href="{{ route('user.login') }}" class="cm-btn cm-btn--outline"><i class="las la-sign-in-alt"></i> @lang('Member Login')</a>
         @endif
     </div>

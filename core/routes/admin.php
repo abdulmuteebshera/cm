@@ -288,6 +288,8 @@ Route::middleware(['admin', 'crm.admin.scope'])->group(function () {
     Route::controller('SupportTicketController')->prefix('contact-submissions')->name('contact.')->group(function () {
         Route::get('/', 'contactSubmissions')->name('index');
         Route::get('pending', 'pendingContactSubmissions')->name('pending');
+        Route::get('view/{id}', 'contactShow')->name('show');
+        Route::post('status/{id}', 'contactStatus')->name('status');
     });
 
     // Language Manager
@@ -397,6 +399,43 @@ Route::middleware(['admin', 'crm.admin.scope'])->group(function () {
         Route::get('schedule/logs/{id}', 'scheduleLogs')->name('schedule.logs');
         Route::post('schedule/log/resolved/{id}', 'scheduleLogResolved')->name('schedule.log.resolved');
         Route::post('schedule/log/flush/{id}', 'logFlush')->name('log.flush');
+    });
+
+    // LinkedIn outreach
+    Route::controller('LinkedinOutreachController')->prefix('linkedin')->name('linkedin.')->group(function () {
+        Route::get('/', 'index')->name('index');
+        Route::post('settings', 'settings')->name('settings');
+        Route::get('connect', 'connect')->name('connect');
+        Route::get('callback', 'callback')->name('callback');
+        Route::post('disconnect', 'disconnect')->name('disconnect');
+        Route::post('run', 'runDaily')->name('run');
+
+        Route::get('prospects', 'prospects')->name('prospects');
+        Route::post('prospects', 'prospectStore')->name('prospects.store');
+        Route::post('prospects/import', 'prospectImport')->name('prospects.import');
+        Route::post('prospects/search', 'searchMore')->name('prospects.search');
+        Route::get('prospects/{id}', 'prospectShow')->name('prospects.show');
+        Route::post('prospects/{id}', 'prospectUpdate')->name('prospects.update');
+        Route::post('prospects/{id}/delete', 'prospectDelete')->name('prospects.delete');
+        Route::post('prospects/{id}/response', 'prospectResponse')->name('prospects.response');
+        Route::post('prospects/{id}/include', 'prospectInclude')->name('prospects.include');
+        Route::post('prospects/{id}/undo-stop', 'prospectUndo')->name('prospects.undo');
+        Route::post('prospects/{id}/follow-up', 'prepareFollowUp')->name('prospects.followup');
+
+        Route::post('messages/{id}', 'messageUpdate')->name('messages.update');
+        Route::post('messages/{id}/approve', 'messageApprove')->name('messages.approve');
+        Route::post('messages/{id}/reject', 'messageReject')->name('messages.reject');
+        Route::post('messages/{id}/sent', 'messageSent')->name('messages.sent');
+
+        Route::get('posts', 'posts')->name('posts');
+        Route::post('posts', 'postStore')->name('posts.store');
+        Route::post('posts/{id}', 'postUpdate')->name('posts.update');
+        Route::post('posts/{id}/image', 'postImage')->name('posts.image');
+        Route::post('posts/{id}/approve', 'postApprove')->name('posts.approve');
+        Route::post('posts/{id}/reject', 'postReject')->name('posts.reject');
+        Route::post('posts/{id}/retry', 'postRetry')->name('posts.retry');
+
+        Route::get('report', 'report')->name('report');
     });
 
     // SEO

@@ -45,7 +45,7 @@
                     <li><a href="tel:+19175006476">+1 917 500 6476</a></li>
                     <li><a href="mailto:Info@crownmaire.com">Info@crownmaire.com</a></li>
                     <li><a href="{{ route('user.login') }}">@lang('Member Login')</a></li>
-                    <li><a href="{{ route('contact') }}">@lang('Request Invitation')</a></li>
+                    <li><a href="{{ route('contact') }}#inquiry">@lang('Investment Inquiry')</a></li>
                 </ul>
             </div>
         </div>
@@ -65,3 +65,23 @@
         <p class="cm-footer__copy">&copy; {{ date('Y') }} <a href="{{ route('home') }}">{{ __($general->site_name) }}</a>. @lang('All Rights Reserved')</p>
     </div>
 </footer>
+<style>
+    .cm-lead-dock { display: none; }
+    @media (max-width: 767px) {
+        .cm-lead-dock { display: block; height: 76px; }
+        .cm-lead-bar {
+            position: fixed; left: 12px; right: 12px; bottom: 12px; z-index: 40;
+            display: flex; align-items: center; justify-content: center; gap: 8px;
+            min-height: 52px; padding: 12px 18px; border-radius: 14px;
+            background: #0033ad; color: #fff; font-weight: 700; text-decoration: none;
+            box-shadow: 0 10px 30px rgba(0, 51, 173, 0.35);
+        }
+    }
+</style>
+@if (!request()->routeIs('contact'))
+    <div class="cm-lead-dock">
+        <a href="{{ request()->routeIs(['home', 'strategies']) ? '#inquiry' : route('contact') . '#inquiry' }}" class="cm-lead-bar">
+            <i class="las la-paper-plane"></i> @lang('Inquire about investing')
+        </a>
+    </div>
+@endif

@@ -21,8 +21,8 @@
             <span class="cm-badge"><i class="las la-layer-group"></i> @lang('Investment Strategies')</span>
             <h1 class="cm-page-hero__title">@lang('Structured programs built for quantitative performance')</h1>
             <p class="cm-page-hero__lead">@lang('Crownmaire offers invitation-only investment programs combining algorithmic execution, multi-asset diversification, and institutional reporting — designed for qualified investors seeking disciplined long-term alignment.')</p>
-            <a href="{{ route('contact') }}" class="cm-btn cm-btn--accent cm-btn--glow">
-                <i class="las la-paper-plane"></i> @lang('Request Invitation')
+            <a href="#inquiry" class="cm-btn cm-btn--accent cm-btn--glow">
+                <i class="las la-paper-plane"></i> @lang('Inquire About Investing')
             </a>
         </div>
     </section>
@@ -106,6 +106,8 @@
         </div>
     </section>
 
+    @include($activeTemplate . 'partials.cm-invest-inquiry')
+
     <section class="cm-section cm-section--cta">
         <div class="cm-container">
             <div class="cm-banner cm-reveal">
@@ -116,7 +118,7 @@
                     <h3>@lang('Ready to explore Crownmaire programs?')</h3>
                     <p>@lang('Speak with our team about qualification, strategy fit, and private investor access.')</p>
                     <div class="cm-banner__actions">
-                        <a href="{{ route('contact') }}" class="cm-btn cm-btn--accent">@lang('Contact experts')</a>
+                        <a href="#inquiry" class="cm-btn cm-btn--accent">@lang('Inquire About Investing')</a>
                         <a href="{{ route('platform') }}" class="cm-btn cm-btn--ghost cm-btn--on-dark">@lang('Explore platform')</a>
                     </div>
                 </div>
@@ -126,7 +128,7 @@
 @endsection
 
 @push('style')
-    <link rel="stylesheet" href="{{ asset($activeTemplateTrue . 'css/crownmaire-landing.css') }}?v=18">
+    <link rel="stylesheet" href="{{ asset($activeTemplateTrue . 'css/crownmaire-landing.css') }}?v=29">
 @endpush
 
 @push('script')

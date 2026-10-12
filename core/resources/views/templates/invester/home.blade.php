@@ -28,7 +28,7 @@
                     @if (auth()->check())
                         <a href="{{ route('user.home') }}" class="cm-btn cm-btn--accent cm-btn--glow"><i class="las la-th-large"></i> @lang('Go to Dashboard')</a>
                     @else
-                        <a href="{{ route('contact') }}" class="cm-btn cm-btn--accent cm-btn--glow"><i class="las la-paper-plane"></i> @lang('Request Invitation')</a>
+                        <a href="#inquiry" class="cm-btn cm-btn--accent cm-btn--glow"><i class="las la-paper-plane"></i> @lang('Inquire About Investing')</a>
                     @endif
                     <a href="{{ route('home') }}#about" class="cm-btn cm-btn--ghost">@lang('Explore our approach')</a>
                 </div>
@@ -205,6 +205,8 @@
         </div>
     </section>
 
+    @include($activeTemplate . 'partials.cm-invest-inquiry')
+
     {{-- FAQ --}}
     <section class="cm-section cm-section--alt" id="faqs">
         <div class="cm-container">
@@ -212,8 +214,8 @@
                 <div class="cm-split__copy cm-reveal">
                     <span class="cm-section__tag cm-section__tag--accent">@lang('frequently asked questions')</span>
                     <h2 class="cm-split__title">@lang('Explore key information to better understand our investment approach and operating model')</h2>
-                    <a href="{{ route('contact') }}" class="cm-btn cm-btn--outline">
-                        @lang('Read More')
+                    <a href="#inquiry" class="cm-btn cm-btn--outline">
+                        @lang('Inquire about investing')
                         <svg width="16" height="16" viewBox="0 0 17 16" fill="none" aria-hidden="true"><path d="M8.5 1L15.5 8M15.5 8L8.5 15M15.5 8H0" stroke="currentColor" stroke-width="1.5"/></svg>
                     </a>
                 </div>
@@ -243,8 +245,8 @@
                     <h3>@lang('Access the future of smart investment strategies')</h3>
                     <p>@lang('Connect with our team to learn how Crownmaire\'s quantitative programs align with your capital objectives.')</p>
                     <div class="cm-banner__actions">
-                        <a href="{{ route('contact') }}" class="cm-btn cm-btn--accent">
-                            <i class="las la-envelope"></i> @lang('Contact experts')
+                        <a href="#inquiry" class="cm-btn cm-btn--accent">
+                            <i class="las la-paper-plane"></i> @lang('Inquire About Investing')
                         </a>
                         @if (auth()->check())
                             <a href="{{ route('user.home') }}" class="cm-btn cm-btn--ghost cm-btn--on-dark">
@@ -263,7 +265,7 @@
 @endsection
 
 @push('style')
-    <link rel="stylesheet" href="{{ asset($activeTemplateTrue . 'css/crownmaire-landing.css') }}?v=20">
+    <link rel="stylesheet" href="{{ asset($activeTemplateTrue . 'css/crownmaire-landing.css') }}?v=29">
 @endpush
 
 @push('script')

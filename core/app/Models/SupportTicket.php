@@ -55,6 +55,72 @@ class SupportTicket extends Model
         return empty($this->user_id);
     }
 
+    public static function inquiryReasons(): array
+    {
+        return ['Investment', 'Partnership', 'Other'];
+    }
+
+    public static function capitalRanges(): array
+    {
+        return [
+            'Under $25,000',
+            '$25,000 – $100,000',
+            '$100,000 – $250,000',
+            '$250,000 – $1,000,000',
+            '$1,000,000 or more',
+            'Prefer to discuss',
+        ];
+    }
+
+    public function leadStatusBadge(): string
+    {
+        $map = [
+            0 => ['New', 'success'],
+            1 => ['Contacted', 'primary'],
+            2 => ['Follow-up', 'warning'],
+            3 => ['Closed', 'dark'],
+        ];
+        [$label, $color] = $map[(int) $this->status] ?? ['New', 'success'];
+
+        return '<span class="badge badge--' . $color . '">' . e(trans($label)) . '</span>';
+    }
+
+    public function leadFields(): array
+    {
+        $messages = $this->relationLoaded('supportMessage')
+            ? $this->supportMessage
+            : $this->supportMessage()->orderBy('id')->get();
+        $raw = (string) optional($messages->sortBy('id')->first())->message;
+
+        $company = trim((string) $this->company_name);
+        $phone   = trim((string) $this->phone);
+        $capital = trim((string) $this->capital_range);
+        $body    = [];
+
+        foreach (preg_split("/\r\n|\n|\r/", $raw) ?: [] as $line) {
+            if ($phone === '' && preg_match('/^Phone:\s*(.+)$/i', $line, $match)) {
+                $phone = trim($match[1]);
+                continue;
+            }
+            if ($company === '' && preg_match('/^Company:\s*(.+)$/i', $line, $match)) {
+                $company = trim($match[1]);
+                continue;
+            }
+            if ($capital === '' && preg_match('/^Capital range:\s*(.+)$/i', $line, $match)) {
+                $capital = trim($match[1]);
+                continue;
+            }
+            $body[] = $line;
+        }
+
+        return [
+            'company' => $company !== '' ? $company : '—',
+            'phone'   => $phone !== '' ? $phone : '—',
+            'capital' => $capital !== '' ? $capital : '—',
+            'message' => trim(implode("\n", $body)),
+        ];
+    }
+
     public function user()
     {
         return $this->belongsTo(User::class);

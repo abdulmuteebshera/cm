@@ -17,8 +17,8 @@
             <span class="cm-badge"><i class="las la-info-circle"></i> @lang('About us')</span>
             <h1 class="cm-page-hero__title">@lang('Redefining Asset Management Through Precision and Technology')</h1>
             <p class="cm-page-hero__lead">@lang('Crownmaire Capital — modern investment management through quantitative research, algorithmic trading, and technology-driven decision systems.')</p>
-            <a href="{{ route('contact') }}" class="cm-btn cm-btn--accent cm-btn--glow">
-                <i class="las la-paper-plane"></i> @lang('Request Invitation')
+            <a href="{{ route('contact') }}#inquiry" class="cm-btn cm-btn--accent cm-btn--glow">
+                <i class="las la-paper-plane"></i> @lang('Inquire About Investing')
             </a>
         </div>
     </section>
@@ -111,8 +111,8 @@
                     <h3>@lang('Access the future of smart investment strategies')</h3>
                     <p>@lang('Connect with our team to learn how Crownmaire\'s quantitative programs align with your capital objectives.')</p>
                     <div class="cm-banner__actions">
-                        <a href="{{ route('contact') }}" class="cm-btn cm-btn--accent">
-                            <i class="las la-envelope"></i> @lang('Contact experts')
+                        <a href="{{ route('contact') }}#inquiry" class="cm-btn cm-btn--accent">
+                            <i class="las la-paper-plane"></i> @lang('Inquire About Investing')
                         </a>
                         @if (auth()->check())
                             <a href="{{ route('user.home') }}" class="cm-btn cm-btn--ghost cm-btn--on-dark">

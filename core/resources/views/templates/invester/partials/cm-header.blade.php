@@ -38,8 +38,8 @@
                     <span>@lang('Login')</span>
                 </a>
             @endif
-            <a href="{{ route('contact') }}" class="cm-btn cm-btn--sm cm-btn--accent">
-                @lang('Request Invitation')
+            <a href="{{ request()->routeIs(['home', 'strategies', 'contact']) ? '#inquiry' : route('contact') . '#inquiry' }}" class="cm-btn cm-btn--sm cm-btn--accent">
+                @lang('Investment Inquiry')
             </a>
         </div>
     </div>

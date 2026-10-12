@@ -429,6 +429,7 @@ Route::middleware(['admin', 'crm.admin.scope'])->group(function () {
 
         Route::get('posts', 'posts')->name('posts');
         Route::post('posts', 'postStore')->name('posts.store');
+        Route::post('posts/create', 'postCreate')->name('posts.create');
         Route::post('posts/{id}', 'postUpdate')->name('posts.update');
         Route::post('posts/{id}/image', 'postImage')->name('posts.image');
         Route::post('posts/{id}/approve', 'postApprove')->name('posts.approve');

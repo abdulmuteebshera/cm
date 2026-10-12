@@ -4,7 +4,7 @@
         <div class="card-body">
             <p class="mb-2">@lang('Each day the queue prepares up to 20 welcome notes for founders, owners, chairmen, and family offices who can allocate at least $20,000. Larger clients are written first. Add each person with a public profile URL and a short note about the business.')</p>
             <p class="mb-2">@lang('Approve the welcome note, then send the connection request from your LinkedIn account and mark it sent. LinkedIn does not allow this portal to send the invite.')</p>
-            <p class="mb-0">@lang('Posts are written from the Crownmaire site every 3 days, with the firm’s keywords and hashtags. A post needs a picture and approval, then it publishes through LinkedIn’s official posting API.')</p>
+            <p class="mb-0">@lang('Posts are written from the Crownmaire site, with the firm’s keywords and hashtags. Create a post from a short context, review the picture, and approve it. It publishes through LinkedIn’s official posting API.')</p>
         </div>
     </div>
 
@@ -64,7 +64,7 @@
                         <div class="form-group">
                             <label>@lang('Profile posts')</label>
                             <select name="posting_enabled" class="form-control">
-                                <option value="1" @selected($settings->posting_enabled)>@lang('On — one post every 3 days')</option>
+                                <option value="1" @selected($settings->posting_enabled)>@lang('On — publish when a post is approved')</option>
                                 <option value="0" @selected(!$settings->posting_enabled)>@lang('Off')</option>
                             </select>
                         </div>

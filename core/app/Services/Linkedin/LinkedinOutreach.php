@@ -48,7 +48,6 @@ class LinkedinOutreach
 
         $this->reviewProspects();
         $this->draftFollowUps();
-        $this->preparePost();
 
         $settings = $settings->fresh();
         if (!$settings->require_approval) {
@@ -414,23 +413,24 @@ class LinkedinOutreach
 
         $post->status = 'approved';
         $post->error = null;
-        $post->scheduled_for = $this->nextPostDate();
+        $post->scheduled_for = today();
         $post->save();
 
-        if ($this->postIntervalOpen() && $post->scheduled_for->lte(today())) {
+        $settings = LinkedinSetting::current();
+        if ($settings->posting_enabled && $settings->isConnected()) {
             $this->publishPost($post);
             $this->snapshot(now());
 
             return 'Post published on the connected LinkedIn profile.';
         }
 
-        return 'Post approved. It will publish on '.$post->scheduled_for->format('d M Y').', which keeps the one-post-every-3-days pace.';
+        return 'Post approved. Connect the LinkedIn account to publish it.';
     }
 
     public function publishDuePost(): ?string
     {
         $settings = LinkedinSetting::current();
-        if (!$settings->posting_enabled || !$settings->isConnected() || !$this->postIntervalOpen()) {
+        if (!$settings->posting_enabled || !$settings->isConnected()) {
             return null;
         }
 
@@ -562,26 +562,12 @@ class LinkedinOutreach
 
     public function postIntervalOpen(): bool
     {
-        $days = max(3, (int) LinkedinSetting::current()->post_interval_days);
-        $last = LinkedinPost::query()->where('status', 'published')->max('published_at');
-        if (!$last) {
-            return true;
-        }
-
-        return Carbon::parse($last)->startOfDay()->lte(today()->subDays($days));
+        return true;
     }
 
     public function nextPostDate(): Carbon
     {
-        $days = max(3, (int) LinkedinSetting::current()->post_interval_days);
-        $last = LinkedinPost::query()->where('status', 'published')->max('published_at');
-        if (!$last) {
-            return today();
-        }
-
-        $next = Carbon::parse($last)->startOfDay()->addDays($days);
-
-        return $next->lt(today()) ? today() : $next;
+        return today();
     }
 
     private function createConnectionDraft(LinkedinProspect $prospect, LinkedinSetting $settings): LinkedinMessage

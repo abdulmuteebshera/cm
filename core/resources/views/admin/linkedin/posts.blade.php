@@ -2,30 +2,25 @@
 @section('panel')
     <div class="card b-radius--10 mb-3">
         <div class="card-body">
-            <p class="mb-2">@lang('One post every 3 days. The text is written from Crownmaire’s site: quantitative asset management, invitation-only programs for qualified investors from $20,000, New York and Dubai, plus the site keywords as hashtags. Add a picture and approve it before it publishes.')</p>
-            <p class="mb-0">@lang('Next open day'): <strong>{{ $nextDate->format('d M Y') }}</strong>
-                @if(!$settings->isConnected())
-                    — @lang('connect the LinkedIn account before a post can publish.')
-                @endif
-            </p>
+            <p class="mb-0">@lang('Write a short context. The post text, keywords, and picture are created from that context and from the Crownmaire site: quantitative asset management, invitation-only programs from $20,000, New York and Dubai. Approve it to publish. There is no waiting period.')</p>
         </div>
     </div>
 
     <div class="card b-radius--10 mb-3">
-        <div class="card-header"><h5 class="mb-0">@lang('New post')</h5></div>
+        <div class="card-header"><h5 class="mb-0">@lang('Create post')</h5></div>
         <div class="card-body">
-            <form method="post" action="{{ route('admin.linkedin.posts.store') }}" enctype="multipart/form-data">
+            <form method="post" action="{{ route('admin.linkedin.posts.create') }}">
                 @csrf
                 <div class="form-group">
-                    <label>@lang('Text')</label>
-                    <textarea name="commentary" class="form-control" rows="5" maxlength="3000" required>{{ old('commentary') }}</textarea>
+                    <label>@lang('Context')</label>
+                    <textarea name="context" class="form-control" rows="4" maxlength="500" required placeholder="Example: Family offices in Dubai reviewing a private multi-asset program">{{ old('context') }}</textarea>
                 </div>
                 <div class="form-group">
-                    <label>@lang('Picture')</label>
-                    <input type="file" name="image" class="form-control" accept="image/jpeg,image/png" required>
-                    <small class="text-muted">@lang('JPG or PNG, up to 5 MB. A wide image around 1200 by 627 works well.')</small>
+                    <label>@lang('Extra keywords')</label>
+                    <input type="text" name="keywords" class="form-control" maxlength="200" value="{{ old('keywords') }}" placeholder="family office, private allocation, Dubai">
+                    <small class="text-muted">@lang('Optional. Site keywords are added as well.')</small>
                 </div>
-                <button class="btn btn--primary" type="submit">@lang('Save post')</button>
+                <button class="btn btn--primary" type="submit">@lang('Create post')</button>
             </form>
         </div>
     </div>

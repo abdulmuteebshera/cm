@@ -10,6 +10,7 @@ use App\Models\LinkedinReport;
 use App\Models\LinkedinSetting;
 use App\Services\Linkedin\LinkedinClient;
 use App\Services\Linkedin\LinkedinOutreach;
+use App\Services\Linkedin\LinkedinPostDraft;
 use App\Services\Linkedin\LinkedinPublicSearch;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Schema;
@@ -509,11 +510,32 @@ class LinkedinOutreachController extends Controller
 
         $pageTitle = 'LinkedIn Posts';
         $settings = LinkedinSetting::current();
-        $openPosts = LinkedinPost::query()->where('status', '!=', 'published')->orderByDesc('id')->get();
+        $openPosts = LinkedinPost::query()->where('status', '!=', 'published')->where('status', '!=', 'rejected')->orderByDesc('id')->get();
         $published = LinkedinPost::query()->where('status', 'published')->orderByDesc('published_at')->paginate(getPaginate());
-        $nextDate = app(LinkedinOutreach::class)->nextPostDate();
 
-        return view('admin.linkedin.posts', compact('pageTitle', 'settings', 'openPosts', 'published', 'nextDate'));
+        return view('admin.linkedin.posts', compact('pageTitle', 'settings', 'openPosts', 'published'));
+    }
+
+    public function postCreate(Request $request)
+    {
+        if ($missing = $this->missingTables()) {
+            return $missing;
+        }
+
+        $request->validate([
+            'context'  => 'required|string|max:500',
+            'keywords' => 'nullable|string|max:200',
+        ]);
+
+        try {
+            app(LinkedinPostDraft::class)->create($request->context, $request->keywords);
+        } catch (RuntimeException $exception) {
+            $notify[] = ['error', $exception->getMessage()];
+            return back()->withNotify($notify)->withInput();
+        }
+
+        $notify[] = ['success', 'Post created from that context. Review the text and picture, then approve it.'];
+        return back()->withNotify($notify);
     }
 
     public function postStore(Request $request)
@@ -643,7 +665,7 @@ class LinkedinOutreachController extends Controller
         if ($post->status === 'published') {
             $notify[] = ['success', 'Post published.'];
         } else {
-            $notify[] = ['success', 'Post is approved and will publish when the 3-day gap has passed.'];
+            $notify[] = ['success', 'Post is approved and will publish when the LinkedIn account is connected.'];
         }
         return back()->withNotify($notify);
     }
